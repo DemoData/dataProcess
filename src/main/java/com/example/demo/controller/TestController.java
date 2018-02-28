@@ -2,8 +2,8 @@ package com.example.demo.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.com.example.demo.config.HRSMongoConfig;
-import com.example.demo.com.example.demo.config.SDSMongoConfig;
+import com.example.demo.config.HRSMongoConfig;
+import com.example.demo.config.SDSMongoConfig;
 import com.example.demo.util.TimeUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

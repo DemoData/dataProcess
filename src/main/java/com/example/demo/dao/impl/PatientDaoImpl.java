@@ -1,10 +1,10 @@
 package com.example.demo.dao.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.com.example.demo.config.HDPBMongoConfig;
-import com.example.demo.com.example.demo.config.HDPMongoConfig;
-import com.example.demo.com.example.demo.config.HRSMongoConfig;
-import com.example.demo.com.example.demo.config.SDSMongoConfig;
+import com.example.demo.config.HDPBMongoConfig;
+import com.example.demo.config.HDPMongoConfig;
+import com.example.demo.config.HRSMongoConfig;
+import com.example.demo.config.SDSMongoConfig;
 import com.example.demo.dao.IPatientDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
