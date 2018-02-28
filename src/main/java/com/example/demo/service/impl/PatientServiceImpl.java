@@ -5,6 +5,8 @@ import com.example.demo.dao.IPatientDao;
 import com.example.demo.service.IPatientService;
 import com.example.demo.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -52,10 +54,16 @@ public class PatientServiceImpl implements IPatientService {
                 List<JSONObject> entities = new ArrayList<JSONObject>();
                 for (JSONObject patient : patients) {
                     JSONObject entity = new JSONObject();
-                    entity.put("oldCategoried", "RA");
+                    entity.put("oldCategoried", new String[]{"RA"});
                     entity.put("SDS_version", "V1.0.0");
-                    entity.put("Tab_version", "VB1.0.1");
-                    entity.put("PID", patient.getString("_id"));
+                    entity.put("Tab_Version", "VB1.0.1");
+                    Object _id =  patient.get("_id");
+                    if(_id instanceof JSONObject){
+                        entity.put("PID", ((JSONObject)_id).getString("$oid"));
+                    }else{
+                        entity.put("PID", patient.getString("_id"));
+                    }
+                    //entity.put("PID", patient.getString("_id"));
                     entity.put("hospitalId", patient.getString("hospitalId"));
                     entity.put("projectProcessId", currentTimeMillis);
                     entity.put("入库时间", currentDate);
