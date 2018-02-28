@@ -22,7 +22,7 @@ import java.util.List;
 @Service
 public class PatientServiceImpl implements IPatientService {
 
-    private static int PAGE_SIZE = 5;
+    private static int PAGE_SIZE = 1000;
     private static String EMPTY_FLAG = "未提及";
 
     @Autowired
@@ -73,7 +73,7 @@ public class PatientServiceImpl implements IPatientService {
                 pageNum++;
             }
         } catch (Exception e) {
-            System.out.println("!!! Get ERROR !!! ");
+            System.out.println("!!! Get ERROR !!! " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -129,10 +129,13 @@ public class PatientServiceImpl implements IPatientService {
             return sdsValue;
         }
         String admissionOrLeaveDate = findInSDS(patient, "入院日期");
-        if (StringUtils.isBlank(admissionOrLeaveDate.replaceAll("[^0-9]", ""))) {
+        if (StringUtils.isBlank(admissionOrLeaveDate)) {
             admissionOrLeaveDate = findInSDS(patient, "出院日期");
+            if (StringUtils.isBlank(admissionOrLeaveDate)) {
+                return EMPTY_FLAG;
+            }
         }
-        if (StringUtils.isBlank(admissionOrLeaveDate.replaceAll("[^0-9]", ""))) {
+        if (StringUtils.isNotBlank(admissionOrLeaveDate) && StringUtils.isBlank(admissionOrLeaveDate.replaceAll("[^0-9]", ""))) {
             return EMPTY_FLAG;
         }
         String age = findInSDS(patient, "年龄");
