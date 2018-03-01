@@ -3,6 +3,7 @@ package com.example.demo.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.dao.IPatientDao;
 import com.example.demo.service.IPatientService;
+import com.example.demo.util.ExcelUtil;
 import com.example.demo.util.TimeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
@@ -37,8 +38,10 @@ public class PatientServiceImpl implements IPatientService {
         System.out.println(">>>>>>>>>>starting<<<<<<<<<<<<");
         long startTime = System.currentTimeMillis();
         Long currentTimeMillis = TimeUtil.getCurrentTimeMillis();
+        currentTimeMillis = 1518189131863L;
         System.out.println(">>>>>>>>>>>>>>>currentTimeMillis is " + currentTimeMillis + " sec<<<<<<<<<<<<<<<<");
         String currentDate = TimeUtil.intToStandardTime(currentTimeMillis);
+        ArrayList<JSONObject> addressList = ExcelUtil.getProvinceCityList("/data/hitales/标准映射_省市区到省.xlsx");
         boolean isFinish = false;
         try {
             while (!isFinish) {
@@ -68,12 +71,40 @@ public class PatientServiceImpl implements IPatientService {
                     entity.put("projectProcessId", currentTimeMillis);
                     entity.put("入库时间", currentDate);
                     entity.put("性别", getValue(patient, "性别"));
-                    entity.put("籍贯", getValue(patient, "籍贯"));
+                    String jiguan = getValue(patient, "籍贯");
+                    entity.put("籍贯-原文", jiguan);
+                    if(EMPTY_FLAG.equals(jiguan)){
+                        entity.put("籍贯", EMPTY_FLAG);
+                    }else{
+                        for (JSONObject jsonObject:addressList) {
+                            if(jiguan.contains(jsonObject.getString("省市区"))){
+                                entity.put("籍贯", jsonObject.getString("所属省"));
+                                break;
+                            }
+                        }
+                        if(!entity.containsKey("籍贯")){
+                            entity.put("籍贯", EMPTY_FLAG);
+                        }
+                    }
                     entity.put("出生地", getValue(patient, "出生地"));
-                    entity.put("现住址", getLiveAddress(patient, "居住地址"));
+                    String address =    getLiveAddress(patient, "居住地址");
+                    entity.put("现住址-原文", address);
+                    if(EMPTY_FLAG.equals(address)){
+                        entity.put("现住址", EMPTY_FLAG);
+                    }else{
+                        for (JSONObject jsonObject:addressList) {
+                            if(address.contains(jsonObject.getString("省市区"))){
+                                entity.put("现住址", jsonObject.getString("所属省"));
+                                break;
+                            }
+                        }
+                        if(!entity.containsKey("现住址")){
+                            entity.put("现住址", EMPTY_FLAG);
+                        }
+                    }
                     entity.put("出生年", getBornDate(patient, "出生日期"));
                     entity.put("婚姻状况", getValue(patient, "婚姻状况"));
-                    System.out.println("processing..." + entity.toString());
+                    //System.out.println("processing..." + entity.toString());
                     entities.add(entity);
                 }
                 patientDao.batchInsert2HDP(entities, "ADO");
@@ -117,10 +148,13 @@ public class PatientServiceImpl implements IPatientService {
             return value;
         }
         if (StringUtils.isNotBlank(getValueInPatient(patient, "户口地址"))) {
-            return value;
+            return getValueInPatient(patient, "户口地址");
         }
         String sdsValue = findInSDS(patient, key);
         if (StringUtils.isNotBlank(sdsValue)) {
+            if("null".equals(sdsValue)){
+                System.out.println("为null数据:" + patient);
+            }
             return sdsValue;
         }
         return EMPTY_FLAG;
@@ -174,7 +208,7 @@ public class PatientServiceImpl implements IPatientService {
                 continue;
             }
             if (msdataItem instanceof LinkedHashMap) {
-                Object baseInfoItems = ((LinkedHashMap<String, Object>) msdataItem).get("基本信息");
+                Object baseInfoItems = ((LinkedHashMap<String, Object>) msdataItem).get("标准基本信息");
                 if (baseInfoItems == null) {
                     continue;
                 }
@@ -182,9 +216,9 @@ public class PatientServiceImpl implements IPatientService {
                     List<LinkedHashMap<String, String>> baseinfos = ((List<LinkedHashMap<String, String>>) baseInfoItems);
                     for (LinkedHashMap<String, String> item : baseinfos) {
                         String title = item.get("段落标题");
-                        String info = item.get("基本信息");
+                        String info = item.get("标准基本信息");
                         if ((StringUtils.isNotBlank(title) && title.contains(key)) || (StringUtils.isNotBlank(info) && info.contains(key))) {
-                            return item.get("基本信息内容");
+                            return item.get("标准基本信息内容");
                         }
                     }
                 }
