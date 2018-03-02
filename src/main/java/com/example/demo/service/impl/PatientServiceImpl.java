@@ -5,6 +5,7 @@ import com.example.demo.dao.IPatientDao;
 import com.example.demo.service.IPatientService;
 import com.example.demo.util.ExcelUtil;
 import com.example.demo.util.TimeUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -22,6 +23,7 @@ import java.util.List;
  * @author aron
  * @date 2018.02.27
  */
+@Slf4j
 @Service
 public class PatientServiceImpl implements IPatientService {
 
@@ -35,11 +37,11 @@ public class PatientServiceImpl implements IPatientService {
     public boolean processPatientData() {
         int pageNum = 0;
         int count = 0;
-        System.out.println(">>>>>>>>>>starting<<<<<<<<<<<<");
+        log.info(">>>>>>>>>>starting<<<<<<<<<<<<");
         long startTime = System.currentTimeMillis();
         Long currentTimeMillis = TimeUtil.getCurrentTimeMillis();
         currentTimeMillis = 1518189131863L;
-        System.out.println(">>>>>>>>>>>>>>>currentTimeMillis is " + currentTimeMillis + " sec<<<<<<<<<<<<<<<<");
+        log.info(">>>>>>>>>>>>>>>currentTimeMillis is " + currentTimeMillis + " sec<<<<<<<<<<<<<<<<");
         String currentDate = TimeUtil.intToStandardTime(currentTimeMillis);
         ArrayList<JSONObject> addressList = ExcelUtil.getProvinceCityList("/data/hitales/标准映射_省市区到省.xlsx");
         boolean isFinish = false;
@@ -49,7 +51,7 @@ public class PatientServiceImpl implements IPatientService {
                 patientQuery.with(new PageRequest(pageNum, PAGE_SIZE));
                 patientQuery.addCriteria(Criteria.where("batchNo").is("ghyy20180115"));
                 List<JSONObject> patients = patientDao.findByQueryInHRS(patientQuery, "Patient");
-                System.out.println(">>>>>>>>>>> Found patients count : " + patients.size());
+                log.info(">>>>>>>>>>> Found patients count : " + patients.size());
                 count += patients.size();
                 if (patients.size() < PAGE_SIZE) {
                     isFinish = true;
@@ -60,10 +62,10 @@ public class PatientServiceImpl implements IPatientService {
                     entity.put("oldCategoried", new String[]{"RA"});
                     entity.put("SDS_version", "V1.0.0");
                     entity.put("Tab_Version", "VB1.0.1");
-                    Object _id =  patient.get("_id");
-                    if(_id instanceof JSONObject){
-                        entity.put("PID", ((JSONObject)_id).getString("$oid"));
-                    }else{
+                    Object _id = patient.get("_id");
+                    if (_id instanceof JSONObject) {
+                        entity.put("PID", ((JSONObject) _id).getString("$oid"));
+                    } else {
                         entity.put("PID", patient.getString("_id"));
                     }
                     //entity.put("PID", patient.getString("_id"));
@@ -73,38 +75,38 @@ public class PatientServiceImpl implements IPatientService {
                     entity.put("性别", getValue(patient, "性别"));
                     String jiguan = getValue(patient, "籍贯");
                     entity.put("籍贯-原文", jiguan);
-                    if(EMPTY_FLAG.equals(jiguan)){
+                    if (EMPTY_FLAG.equals(jiguan)) {
                         entity.put("籍贯", EMPTY_FLAG);
-                    }else{
-                        for (JSONObject jsonObject:addressList) {
-                            if(jiguan.contains(jsonObject.getString("省市区"))){
+                    } else {
+                        for (JSONObject jsonObject : addressList) {
+                            if (jiguan.contains(jsonObject.getString("省市区"))) {
                                 entity.put("籍贯", jsonObject.getString("所属省"));
                                 break;
                             }
                         }
-                        if(!entity.containsKey("籍贯")){
+                        if (!entity.containsKey("籍贯")) {
                             entity.put("籍贯", EMPTY_FLAG);
                         }
                     }
                     entity.put("出生地", getValue(patient, "出生地"));
-                    String address =    getLiveAddress(patient, "居住地址");
+                    String address = getLiveAddress(patient, "居住地址");
                     entity.put("现住址-原文", address);
-                    if(EMPTY_FLAG.equals(address)){
+                    if (EMPTY_FLAG.equals(address)) {
                         entity.put("现住址", EMPTY_FLAG);
-                    }else{
-                        for (JSONObject jsonObject:addressList) {
-                            if(address.contains(jsonObject.getString("省市区"))){
+                    } else {
+                        for (JSONObject jsonObject : addressList) {
+                            if (address.contains(jsonObject.getString("省市区"))) {
                                 entity.put("现住址", jsonObject.getString("所属省"));
                                 break;
                             }
                         }
-                        if(!entity.containsKey("现住址")){
+                        if (!entity.containsKey("现住址")) {
                             entity.put("现住址", EMPTY_FLAG);
                         }
                     }
                     entity.put("出生年", getBornDate(patient, "出生日期"));
                     entity.put("婚姻状况", getValue(patient, "婚姻状况"));
-                    //System.out.println("processing..." + entity.toString());
+                    //log.info("processing..." + entity.toString());
                     entities.add(entity);
                 }
                 patientDao.batchInsert2HDP(entities, "ADO");
@@ -112,13 +114,13 @@ public class PatientServiceImpl implements IPatientService {
                 pageNum++;
             }
         } catch (Exception e) {
-            System.out.println("!!! Get ERROR !!! " + e.getMessage());
+            log.info("!!! Get ERROR !!! " + e.getMessage());
             e.printStackTrace();
             return false;
         }
         long endTime = System.currentTimeMillis();
-        System.out.println(">>>>>>>>>>>>>>>Cost " + (endTime - startTime) / 1000 + " sec<<<<<<<<<<<<<<<<");
-        System.out.println(">>>>>>>>>>>>>>>inserted " + count + " records , Process Done<<<<<<<<<<<<<<<<");
+        log.info(">>>>>>>>>>>>>>>Cost " + (endTime - startTime) / 1000 + " sec<<<<<<<<<<<<<<<<");
+        log.info(">>>>>>>>>>>>>>>inserted " + count + " records , Process Done<<<<<<<<<<<<<<<<");
         return isFinish;
     }
 
@@ -152,8 +154,8 @@ public class PatientServiceImpl implements IPatientService {
         }
         String sdsValue = findInSDS(patient, key);
         if (StringUtils.isNotBlank(sdsValue)) {
-            if("null".equals(sdsValue)){
-                System.out.println("为null数据:" + patient);
+            if ("null".equals(sdsValue)) {
+                log.info("为null数据:" + patient);
             }
             return sdsValue;
         }

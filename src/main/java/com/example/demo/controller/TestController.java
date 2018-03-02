@@ -2,8 +2,7 @@ package com.example.demo.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.config.HRSMongoConfig;
-import com.example.demo.config.SDSMongoConfig;
+import com.example.demo.config.MongoDataSourceConfig;
 import com.example.demo.util.TimeUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,11 +30,11 @@ public class TestController {
     private static Integer count = 0;
 
     @Autowired
-    @Qualifier(HRSMongoConfig.MONGO_TEMPLATE)
+    @Qualifier(MongoDataSourceConfig.HRS_MONGO_TEMPLATE)
     private MongoTemplate primaryMongoTemplate;
 
     @Autowired
-    @Qualifier(SDSMongoConfig.MONGO_TEMPLATE)
+    @Qualifier(MongoDataSourceConfig.SDS_MONGO_TEMPLATE)
     private MongoTemplate secondaryMongoTemplate;
 
     @GetMapping("/standardData")

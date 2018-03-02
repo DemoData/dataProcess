@@ -1,11 +1,9 @@
 package com.example.demo.dao.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.config.HDPBMongoConfig;
-import com.example.demo.config.HDPMongoConfig;
-import com.example.demo.config.HRSMongoConfig;
-import com.example.demo.config.SDSMongoConfig;
+import com.example.demo.config.MongoDataSourceConfig;
 import com.example.demo.dao.IPatientDao;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,23 +16,24 @@ import java.util.List;
  * @author aron
  * @date 2018.02.27
  */
+@Slf4j
 @Repository
 public class PatientDaoImpl implements IPatientDao {
 
     @Autowired
-    @Qualifier(HRSMongoConfig.MONGO_TEMPLATE)
+    @Qualifier(MongoDataSourceConfig.HRS_MONGO_TEMPLATE)
     private MongoTemplate hrsMongoTemplate;
 
     @Autowired
-    @Qualifier(SDSMongoConfig.MONGO_TEMPLATE)
+    @Qualifier(MongoDataSourceConfig.SDS_MONGO_TEMPLATE)
     private MongoTemplate sdsMongoTemplate;
 
     @Autowired
-    @Qualifier(HDPMongoConfig.MONGO_TEMPLATE)
+    @Qualifier(MongoDataSourceConfig.HDP_MONGO_TEMPLATE)
     private MongoTemplate hdpMongoTemplate;
 
     @Autowired
-    @Qualifier(HDPBMongoConfig.MONGO_TEMPLATE)
+    @Qualifier(MongoDataSourceConfig.HDPB_MONGO_TEMPLATE)
     private MongoTemplate hdpbMongoTemplate;
 
     @Override
