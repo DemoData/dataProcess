@@ -15,7 +15,8 @@ import javax.sql.DataSource;
 @Configuration
 public class MysqlDataSourceConfig {
 
-    public static final String MYSQL_CONFIG_PREFIX = "mysql.yixianzhanwei";
+    public static final String MYSQL_YXZW_PREFIX = "mysql.yixianzhanwei";
+    public static final String MYSQL_JKCT_PREFIX = "mysql.jiankangchati";
     public static final String MYSQL_YXZW_DATASOURCE = "yxzwDataSource";
     public static final String MYSQL_JKCT_DATASOURCE = "jkctDataSource";
     public static final String MYSQL_YXZW_TEMPLATE = "yxzwJdbcTemplate";
@@ -24,14 +25,14 @@ public class MysqlDataSourceConfig {
     @Primary
     @Bean(name = MYSQL_YXZW_DATASOURCE)
     @Qualifier(MYSQL_YXZW_DATASOURCE)
-    @ConfigurationProperties(prefix = MYSQL_CONFIG_PREFIX)
+    @ConfigurationProperties(prefix = MYSQL_YXZW_PREFIX)
     public DataSource yxzwDataSource() {
         return DataSourceBuilder.create().build();
     }
 
     @Bean(name = MYSQL_JKCT_DATASOURCE)
     @Qualifier(MYSQL_JKCT_DATASOURCE)
-    @ConfigurationProperties(prefix = MYSQL_CONFIG_PREFIX)
+    @ConfigurationProperties(prefix = MYSQL_JKCT_PREFIX)
     public DataSource jkctDataSource() {
         return DataSourceBuilder.create().build();
     }
