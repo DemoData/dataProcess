@@ -2,14 +2,13 @@ package com.example.demo.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.dao.IPatientDao;
-import com.example.demo.service.IPatientService;
+import com.example.demo.service.IDataService;
 import com.example.demo.util.ExcelUtil;
 import com.example.demo.util.TimeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -24,17 +23,18 @@ import java.util.List;
  * @date 2018.02.27
  */
 @Slf4j
-@Service
-public class PatientServiceImpl implements IPatientService {
+@Service("patientService")
+public class PatientServiceImpl implements IDataService {
 
     private static int PAGE_SIZE = 1000;
     private static String EMPTY_FLAG = "未提及";
 
     @Autowired
+    @Qualifier("patientDao")
     private IPatientDao patientDao;
 
     @Override
-    public boolean processPatientData() {
+    public boolean processData() {
         int pageNum = 0;
         int count = 0;
         log.info(">>>>>>>>>>starting<<<<<<<<<<<<");
