@@ -92,6 +92,11 @@ public class AssayDaoImpl extends GenericDao implements IAssayDao {
     }
 
     @Override
+    public JSONObject findRecordByIdInHRS(String applyId) {
+        return null;
+    }
+
+    @Override
     protected String generateQuerySql() {
         String sql = "select t.`一次就诊号` AS 'groupRecordName',t.`检验申请号` AS 'applyId' from `检验报告明细` t GROUP BY t.`检验申请号` ";
         return sql;
