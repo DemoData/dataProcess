@@ -34,6 +34,15 @@ public class TimeUtil {
         return YYYYMMDD.get().format(d);
     }
 
+    /**
+     * 时间字符串去掉中间的符号变为long
+     * @param date
+     * @return
+     */
+    public static Long dateStringToLong(String date){
+        return Long.valueOf(date.substring(0,19).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", ""));
+    }
+
     public static Long dateStringToMillis(String dateString) {
         Date date;
         try {
@@ -109,8 +118,17 @@ public class TimeUtil {
         }
     }
 
+    public static String medicalContentTimeFormat(String str){
+        StringBuilder sb = new StringBuilder();
+        sb.append(str.substring(0, 10));
+        sb.append(" ");
+        sb.append(str.substring(10));
+        sb.append(":00.0");
+        return sb.toString();
+    }
+
 
     public static void main(String[] args) {
-        System.out.println(getLastDayStart());
+        System.out.println(medicalContentTimeFormat("2016-05-2717:33"));
     }
 }
