@@ -36,6 +36,7 @@ public class MysqlDataSourceConfig {
         return DataSourceBuilder.create().build();
     }
 
+
     @Bean(name = MYSQL_JKCT_DATASOURCE)
     @Qualifier(MYSQL_JKCT_DATASOURCE)
     @ConfigurationProperties(prefix = MYSQL_JKCT_PREFIX)

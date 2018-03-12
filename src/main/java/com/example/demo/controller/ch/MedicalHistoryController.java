@@ -10,22 +10,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author aron
- * @date 2018.02.27
  */
 @RestController
-@Api(tags = "长海医院Patient数据处理")
+@Api(tags = "长海医院病历文本数据处理")
 @RequestMapping("/chyx")
-public class PatientController {
+public class MedicalHistoryController {
+
     public static final String SUCCESS_FLAG = "Process Done";
     public static final String FAIL_FLAG = "Process Failure";
 
     @Autowired
-    @Qualifier("chyxPatientService")
-    private IDataService patientService;
+    @Qualifier("chyxMedicalHistoryService")
+    private IDataService pathologyService;
 
-    @GetMapping("/processPatient")
-    public String processPatient() {
-        if (patientService.processData()) {
+    @GetMapping("/processMedicalHistory")
+    public String processMedicalHistory() {
+        if (pathologyService.processData()) {
             return SUCCESS_FLAG;
         }
         return FAIL_FLAG;

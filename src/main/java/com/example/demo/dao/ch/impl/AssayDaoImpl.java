@@ -1,16 +1,13 @@
 package com.example.demo.dao.ch.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.common.dao.GenericDao;
-import com.example.demo.config.MongoDataSourceConfig;
-import com.example.demo.config.MysqlDataSourceConfig;
+import com.example.demo.dao.ch.BaseDao;
 import com.example.demo.dao.ch.IAssayDao;
 import com.example.demo.entity.Record;
 import com.example.demo.entity.ch.Assay;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -22,48 +19,11 @@ import java.util.List;
 
 @Slf4j
 @Repository
-public class AssayDaoImpl extends GenericDao implements IAssayDao {
-
-    @Autowired
-    @Qualifier(MysqlDataSourceConfig.MYSQL_YXZW_TEMPLATE)
-    protected JdbcTemplate yxzwJdbcTemplate;
-
-    @Autowired
-    @Qualifier(MysqlDataSourceConfig.MYSQL_JKCT_TEMPLATE)
-    protected JdbcTemplate jkctJdbcTemplate;
-
-    @Autowired
-    @Qualifier(MysqlDataSourceConfig.MYSQL_TNB_TEMPLATE)
-    protected JdbcTemplate tnbJdbcTemplate;
-
-    @Autowired
-    @Qualifier(MysqlDataSourceConfig.MYSQL_YX_TEMPLATE)
-    protected JdbcTemplate yxJdbcTemplate;
-
-    @Autowired
-    @Qualifier(MongoDataSourceConfig.HRS_MONGO_TEMPLATE)
-    protected MongoTemplate hrsMongoTemplate;
-
-    private JdbcTemplate getJdbcTemplate(String dataSource) {
-        if (MysqlDataSourceConfig.MYSQL_JKCT_DATASOURCE.equals(dataSource)) {
-            return jkctJdbcTemplate;
-        }
-        if (MysqlDataSourceConfig.MYSQL_YXZW_DATASOURCE.equals(dataSource)) {
-            return yxzwJdbcTemplate;
-        }
-        if (MysqlDataSourceConfig.MYSQL_TNB_DATASOURCE.equals(dataSource)) {
-            return tnbJdbcTemplate;
-        }
-        if (MysqlDataSourceConfig.MYSQL_YX_DATASOURCE.equals(dataSource)) {
-            return yxJdbcTemplate;
-        }
-        return jkctJdbcTemplate;
-    }
+public class AssayDaoImpl extends BaseDao implements IAssayDao {
 
     @Override
     public List<Record> findAssayRecord(String dataSource, int PageNum, int PageSize) {
-        JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
-        return super.queryForList(jdbcTemplate, PageNum, PageSize);
+        return super.queryForList(getJdbcTemplate(dataSource), PageNum, PageSize);
     }
 
     @Override
@@ -84,16 +44,24 @@ public class AssayDaoImpl extends GenericDao implements IAssayDao {
 
     @Override
     public List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName) {
-        log.info("findOrgOdCatByGroupRecordName(): 查找诊断名称通过一次就诊号: " + groupRecordName);
-        String sql = "select t.`诊断名称` from `诊断信息` t where t.`一次就诊号`= ?";
-        JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
-        List<String> results = jdbcTemplate.queryForList(sql, String.class, groupRecordName);
-        return results;
+        return super.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
     }
 
     @Override
     public JSONObject findRecordByIdInHRS(String applyId) {
-        return null;
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(applyId));
+        JSONObject record = hrsMongoTemplate.findOne(query, JSONObject.class, "Record");
+        return record;
+    }
+
+    @Override
+    public String findPatientIdByGroupRecordName(String dataSource, String groupRecordName) {
+        log.info("findPatientIdByGroupRecordName(): 查找PatientId通过一次就诊号: " + groupRecordName);
+        String sql = "select t.`病人ID号` from `患者基本信息` t where t.`一次就诊号`= ? group by t.`一次就诊号`";
+        JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
+        String patientId = jdbcTemplate.queryForObject(sql, String.class, groupRecordName);
+        return "shch_" + patientId;
     }
 
     @Override

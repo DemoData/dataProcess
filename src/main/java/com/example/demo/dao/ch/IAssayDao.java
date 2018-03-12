@@ -19,4 +19,6 @@ public interface IAssayDao {
     List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName);
 
     JSONObject findRecordByIdInHRS(String applyId);
+
+    String findPatientIdByGroupRecordName(String dataSource, String applyId);
 }

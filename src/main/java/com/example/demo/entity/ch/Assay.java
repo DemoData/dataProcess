@@ -6,14 +6,11 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Data
-@Entity
 public class Assay {
 
-    @Id
     private String id;//id
     private String onceClinicId;//一次就诊号
     private String assayId;//检验申请号
-
     private String assayTime;//检验时间
     private String assayName;//项目名称
     private String resultFlag;//结果正常标识
@@ -25,7 +22,7 @@ public class Assay {
     private String assayState;//检验状态
     private String assayMethodName;//检验方法名称
 
-    public enum MongoColumn {
+    public enum ColumnMapping {
         ASSAY_TIME("化验时间"),
         ASSAY_NAME("化验名称"),
         RESULT_FLAG("异常情况"),
@@ -39,7 +36,7 @@ public class Assay {
 
         private final String value;
 
-        MongoColumn(String pValue) {
+        ColumnMapping(String pValue) {
             this.value = pValue;
         }
 

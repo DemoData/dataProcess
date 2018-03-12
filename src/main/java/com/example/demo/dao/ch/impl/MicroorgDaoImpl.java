@@ -1,6 +1,6 @@
 package com.example.demo.dao.ch.impl;
 
-import com.example.demo.common.dao.GenericDao;
+import com.example.demo.dao.ch.BaseDao;
 import com.example.demo.dao.ch.IMicroorgDao;
 import com.example.demo.entity.ch.Microorganism;
 import com.example.demo.entity.Record;
@@ -12,7 +12,7 @@ import java.util.List;
 
 @Slf4j
 @Repository
-public class MicroorgDaoImpl extends GenericDao implements IMicroorgDao {
+public class MicroorgDaoImpl extends BaseDao implements IMicroorgDao {
 
     public List<Record> findAllMicroorgRecord() {
         String sql = "";
@@ -28,7 +28,8 @@ public class MicroorgDaoImpl extends GenericDao implements IMicroorgDao {
 
     @Override
     protected String generateQuerySql() {
-        return null;
+        String sql = "";
+        return sql;
     }
 
     @Override

@@ -6,9 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Data
-@Entity
 public class Patient {
-    @Id
     private String id;
 
     private String patientId;
@@ -23,7 +21,7 @@ public class Patient {
 
     private String name;
 
-    public enum MongoColumn {
+    public enum ColumnMapping {
         ID("_id"),
         BATCH_NO("batchNo"),
         SOURCE("source"),
@@ -31,11 +29,11 @@ public class Patient {
         SEX("性别"),
         AGE("年龄"),
         BIRTHDAY("出生年"),
-        NAME("姓名");
+        NAME("name");
 
         private final String value;
 
-        MongoColumn(String pValue) {
+        ColumnMapping(String pValue) {
             this.value = pValue;
         }
 

@@ -11,6 +11,16 @@ import java.util.List;
 public abstract class GenericDao {
     private RowMapper rowMapper;
 
+    /**
+     * query with page
+     *
+     * @param jdbcTemplate
+     * @param currPageNum
+     * @param pageSize
+     * @param <T>
+     * @return
+     * @throws DataAccessException
+     */
     protected <T> List<T> queryForList(JdbcTemplate jdbcTemplate, int currPageNum, int pageSize) throws DataAccessException {
         if (pageSize > 0) {
             int startIndex = (currPageNum - 1) * pageSize;            //开始行索引
@@ -28,6 +38,11 @@ public abstract class GenericDao {
         return jdbcTemplate.query(this.generateQuerySql(), this.generateRowMapper());
     }
 
+    /**
+     * This sql use for method queryForList()
+     *
+     * @return
+     */
     protected abstract String generateQuerySql();
 
     protected abstract <T> RowMapper<T> generateRowMapper();

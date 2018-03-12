@@ -1,10 +1,9 @@
 package com.example.demo.service.ch.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.config.MysqlDataSourceConfig;
 import com.example.demo.dao.ch.IPatientDao;
 import com.example.demo.entity.ch.Patient;
-import com.example.demo.service.IDataService;
+import com.example.demo.service.ch.BaseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,29 +19,13 @@ import java.util.List;
  */
 @Slf4j
 @Service("chyxPatientService")
-public class PatientServiceImpl implements IDataService {
-
-    private static int PAGE_SIZE = 1000;
-    private static String EMPTY_FLAG = "";
+public class PatientServiceImpl extends BaseService {
 
     @Autowired
     @Qualifier("chyxPatientDao")
     IPatientDao patientDao;
 
-
     @Override
-    public boolean processData() {
-        try {
-            process(MysqlDataSourceConfig.MYSQL_JKCT_DATASOURCE);
-            process(MysqlDataSourceConfig.MYSQL_TNB_DATASOURCE);
-            process(MysqlDataSourceConfig.MYSQL_YX_DATASOURCE);
-            process(MysqlDataSourceConfig.MYSQL_YXZW_DATASOURCE);
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
     public void process(String dataSource) throws Exception {
         log.info(">>>>>>>>>Starting process from dataSource: " + dataSource);
         int pageNum = 1;
@@ -64,7 +47,7 @@ public class PatientServiceImpl implements IDataService {
                     log.debug("process(): Patient : " + patient.getPatientId() + " already exist in DB");
                     continue;
                 }
-                JSONObject patientJson = patient2Json(patient);
+                JSONObject patientJson = this.bean2Json(patient);
                 patients.add(patientJson);
             }
             count += patients.size();
@@ -76,16 +59,18 @@ public class PatientServiceImpl implements IDataService {
         log.info(">>>>>>>>>>>total inserted patients: " + count + " from " + dataSource);
     }
 
-    public JSONObject patient2Json(Patient patient) {
+    @Override
+    public JSONObject bean2Json(Object entity) {
+        Patient patient = (Patient) entity;
         JSONObject jsonObj = new JSONObject();
-        jsonObj.put(Patient.MongoColumn.ID.value(), patient.getPatientId());
-        jsonObj.put(Patient.MongoColumn.BATCH_NO.value(), "shch20180208");
-        jsonObj.put(Patient.MongoColumn.HOSPITAL_ID.value(), "57b1e21fd897cd373ec7a14f");
-        jsonObj.put(Patient.MongoColumn.SOURCE.value(), "mysql上传系统");
-        jsonObj.put(Patient.MongoColumn.SEX.value(), patient.getSex());
-        jsonObj.put(Patient.MongoColumn.AGE.value(), patient.getAge());
-        jsonObj.put(Patient.MongoColumn.BIRTHDAY.value(), patient.getBirthDay());
-        jsonObj.put(Patient.MongoColumn.NAME.value(), StringUtils.isEmpty(patient.getName()) ? EMPTY_FLAG : patient.getName());
+        jsonObj.put(Patient.ColumnMapping.ID.value(), patient.getPatientId());
+        jsonObj.put(Patient.ColumnMapping.BATCH_NO.value(), "shch20180208");
+        jsonObj.put(Patient.ColumnMapping.HOSPITAL_ID.value(), "57b1e21fd897cd373ec7a14f");
+//        jsonObj.put(Patient.ColumnMapping.SOURCE.value(), "mysql上传系统");
+        jsonObj.put(Patient.ColumnMapping.SEX.value(), patient.getSex());
+        jsonObj.put(Patient.ColumnMapping.AGE.value(), patient.getAge());
+        jsonObj.put(Patient.ColumnMapping.BIRTHDAY.value(), patient.getBirthDay());
+        jsonObj.put(Patient.ColumnMapping.NAME.value(), StringUtils.isEmpty(patient.getName()) ? EMPTY_FLAG : patient.getName());
         return jsonObj;
     }
 
