@@ -1,5 +1,6 @@
 package com.example.demo.dao.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.example.demo.config.MongoDataSourceConfig;
 import com.example.demo.dao.PandianDao;
 import com.mongodb.BasicDBObject;
@@ -21,12 +22,17 @@ public class PandianDaoImpl implements PandianDao {
     private MongoTemplate hrsMongoTemplate;
 
     @Override
-    public List<String> findIdByBatchNo(String batchNo){
+    public List<JSONObject> findIdByBatchNo(String batchNo){
         DBObject dbObject = new BasicDBObject();
         dbObject.put("batchNo", batchNo);
         DBObject fieldObject = new BasicDBObject();
         fieldObject.put("_id", true);
         Query query = new BasicQuery(dbObject, fieldObject);
-        return hrsMongoTemplate.find(query, String.class, "Patient");
+        return hrsMongoTemplate.find(query, JSONObject.class, "Patient");
+    }
+
+    @Override
+    public List<JSONObject> findCountByQuery(Query query, String collectionName) {
+        return hrsMongoTemplate.find(query, JSONObject.class, collectionName);
     }
 }

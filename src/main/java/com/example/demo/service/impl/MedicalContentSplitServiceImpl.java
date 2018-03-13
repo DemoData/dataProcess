@@ -10,6 +10,8 @@ import com.example.demo.util.PatternUtil;
 import com.example.demo.util.StringUtil;
 import com.example.demo.util.TimeUtil;
 import com.example.model.MedicalContentSplitModel;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -21,6 +23,9 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.BasicQuery;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -388,15 +393,12 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             ichyxDao.changeJdbcTemplate(CommonConstant.JKCT);
             List<String> jkct = ichyxDao.datacul(sql);
             sum += jkct.size();
-            System.out.println(jkct.size() + " " + sum);
             ichyxDao.changeJdbcTemplate(CommonConstant.YX);
             List<String> yx = ichyxDao.datacul(sql);
             sum += yx.size();
-            System.out.println(yx.size() + " " + sum);
             ichyxDao.changeJdbcTemplate(CommonConstant.YXZW);
             List<String> yxzw = ichyxDao.datacul(sql);
             sum += yxzw.size();
-            System.out.println(yxzw.size() + " " + sum);
             ichyxDao.changeJdbcTemplate(CommonConstant.TNB);
             List<String> tnb = ichyxDao.datacul(sql);
             sum += tnb.size();
@@ -428,20 +430,15 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             ichyxDao.changeJdbcTemplate(CommonConstant.JKCT);
             Integer jkct = ichyxDao.dataculAdd(sql);
             sum += jkct;
-            System.out.println(jkct + " " + sum);
             ichyxDao.changeJdbcTemplate(CommonConstant.YX);
             Integer yx = ichyxDao.dataculAdd(sql);
             sum += yx;
-            System.out.println(yx + " " + sum);
             ichyxDao.changeJdbcTemplate(CommonConstant.YXZW);
             Integer yxzw = ichyxDao.dataculAdd(sql);
             sum += yxzw;
-            System.out.println(yxzw + " " + sum);
             ichyxDao.changeJdbcTemplate(CommonConstant.TNB);
             Integer tnb = ichyxDao.dataculAdd(sql);
             sum += tnb;
-            System.out.println(tnb + " " + sum);
-            System.out.println(sum);
             return sum;
         }catch (Exception e){
             e.printStackTrace();
@@ -542,14 +539,18 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         jsonObject.put("患者总数（PID）", userSet.size());
         sql = "select distinct 一次就诊号 from 病历文书 where mapping like '入院记录%' or mapping like '出院记录%'";
         Set<String> visitNumSet = datacul(sql);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '入院记录%'";
+        int ruyuancount = dataculAdd(sql);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '出院记录%'";
+        int chuyuancount = dataculAdd(sql);
+        jsonObject.put("入院记录", ruyuancount);
+        jsonObject.put("出院记录", chuyuancount);
+        jsonObject.put("病历记录汇总", (ruyuancount + chuyuancount));
         jsonObject.put("住院号总数", visitNumSet.size());
         sql = "select distinct 一次就诊号 from 病历文书 where mapping like '入院记录%'";
         Set<String> ruyuan = datacul(sql);
         sql = "select distinct 一次就诊号 from 病历文书 where mapping like '出院记录%'";
         Set<String> chuyuan = datacul(sql);
-        jsonObject.put("入院记录", ruyuan.size());
-        jsonObject.put("出院记录", chuyuan.size());
-        jsonObject.put("病历记录汇总", (ruyuan.size() + chuyuan.size()));
         ruyuan.retainAll(chuyuan);
         jsonObject.put("单次完整出入院盘点", ruyuan.size());
         sql = "select 病人ID号,mapping,count(*) num from 病历文书 where mapping is not null group by 病人ID号,mapping";
@@ -573,12 +574,100 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
     @Override
     public JSONObject mongoPandian(String batchNo) {
         JSONObject jsonObject = new JSONObject();
-        List<String> userList = pandianDao.findIdByBatchNo(batchNo);
+        List<JSONObject> userList = pandianDao.findIdByBatchNo(batchNo);
         jsonObject.put("患者总数（PID）", userList.size());
+        Set<String> userSet = new HashSet<>();
+        for(JSONObject user : userList){
+            userSet.add(user.getString("_id"));
+        }
+        DBObject dbObject = new BasicDBObject();
+        dbObject.put("batchNo", batchNo);
+        dbObject.put("recordType", "入院记录");
+        DBObject fieldObject = new BasicDBObject();
+        fieldObject.put("patientId", true);
+        fieldObject.put("groupRecordName", true);
+        fieldObject.put("info.text", true);
+        Query ruyuanQuery = new BasicQuery(dbObject, fieldObject);
+        List<JSONObject> ruyuan = pandianDao.findCountByQuery(ruyuanQuery, "Record");
+        jsonObject.put("入院记录", ruyuan.size());
+        DBObject chuyuanObject = new BasicDBObject();
+        chuyuanObject.put("batchNo", batchNo);
+        chuyuanObject.put("recordType", "出院记录");
+        Query chuyuanQuery = new BasicQuery(chuyuanObject, fieldObject);
+        List<JSONObject> chuyuan = pandianDao.findCountByQuery(chuyuanQuery, "Record");
+        jsonObject.put("出院记录", chuyuan.size());
+        jsonObject.put("病历记录汇总", chuyuan.size() + ruyuan.size());
+        Set<String> groupRecordNameSet = new HashSet<>();
+        Set<String> ruyuanSet =new HashSet<>();
+        Set<String> chuyuanSet = new HashSet<>();
+        Map<String, String> anchorOriginalMap = new HashMap<>();
+        Map<String ,Integer> anchorCountMap = new HashMap<>();
+        for(JSONObject value : ruyuan){
+            String groupRecordName =value.getString("groupRecordName");
+            groupRecordNameSet.add(groupRecordName);
+            ruyuanSet.add(groupRecordName);
+            String text = value.getJSONObject("info").getString("text");
+            Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
+            while(matcher.find()){
+                String anchor = matcher.group(1);
+                if(!anchorCountMap.containsKey(anchor)){
+                    anchorCountMap.put(anchor, 1);
+                    anchorOriginalMap.put(anchor, text);
+                }else{
+                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
+                }
+            }
+        }
+        for(JSONObject value : chuyuan){
+            String groupRecordName =value.getString("groupRecordName");
+            groupRecordNameSet.add(groupRecordName);
+            chuyuanSet.add(groupRecordName);
+            String text = value.getJSONObject("info").getString("text");
+            Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
+            while(matcher.find()){
+                String anchor = matcher.group(1);
+                if(!anchorCountMap.containsKey(anchor)){
+                    anchorCountMap.put(anchor, 1);
+                    anchorOriginalMap.put(anchor, text);
+                }else{
+                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
+                }
+            }
+        }
+        jsonObject.put("住院号总数", groupRecordNameSet.size());
+        ruyuanSet.retainAll(chuyuanSet);
+        jsonObject.put("单次完整出入院盘点", ruyuanSet.size());
+        Set<String> notFoundSet =new HashSet<>();
+        Map<String, Integer[]> result =new HashMap<>();
+        for(JSONObject value : ruyuan){
+            String id =value.getString("patientId");
+            if(!userSet.contains(id)){
+                notFoundSet.add(id);
+            }
+            if(!result.containsKey(id)){
+                result.put(id, new Integer[]{0,0});
+
+            }
+            result.get(id)[0] += 1;
+        }
+        for(JSONObject value : chuyuan){
+            String id =value.getString("patientId");
+            if(!userSet.contains(id)){
+                notFoundSet.add(id);
+            }
+            if(!result.containsKey(id)){
+                result.put(id, new Integer[]{0,0});
+
+            }
+            result.get(id)[1] += 1;
+        }
+        jsonObject.put("出入院未找到患者ID列表", notFoundSet);
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)", "xlsx", anchorOriginalMap, anchorCountMap, new String[]{"锚点", "数量", "原文"});
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单(mongo)", "xlsx", result, new String[]{"PID", "入院记录", "出院记录"});
         return jsonObject;
     }
 
-    public static void writer(String path, String fileName,String fileType,Map<String, Integer[]> result,String titleRow[]) {
+    private void writer(String path, String fileName,String fileType,Map<String, Integer[]> result,String titleRow[]) {
         try{
             Workbook wb = null;
             String excelPath = path+File.separator+fileName+"."+fileType;
@@ -629,7 +718,11 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             for(String key : result.keySet()){
                 row = sheet.createRow(++rowIndex);
                 cell = row.createCell(0);
-                cell.setCellValue("shch_" + key);
+                if(key.startsWith("shch_")){
+                    cell.setCellValue(key);
+                }else {
+                    cell.setCellValue("shch_" + key);
+                }
                 Integer[] arr = result.get(key);
                 cell = row.createCell(1);
                 cell.setCellValue(arr[0]);
@@ -648,6 +741,82 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         }
 
     }
+
+    public void writer(String path, String fileName,String fileType,Map<String, String> anchorOriginalMap,
+                              Map<String, Integer> anchorCountMap,String titleRow[]){
+        try{
+
+            Workbook wb = null;
+            String excelPath = path+File.separator+fileName+"."+fileType;
+            File file = new File(excelPath);
+            Sheet sheet =null;
+            //创建工作文档对象
+            if (!file.exists()) {
+                if (fileType.equals("xls")) {
+                    wb = new HSSFWorkbook();
+
+                } else if(fileType.equals("xlsx")) {
+
+                    wb = new XSSFWorkbook();
+                } else {
+                    throw new RuntimeException("文件格式不正确");
+                }
+                //创建sheet对象
+                sheet = (Sheet) wb.createSheet("锚点原文对应表");
+                OutputStream outputStream = new FileOutputStream(excelPath);
+                wb.write(outputStream);
+                outputStream.flush();
+                outputStream.close();
+
+            } else {
+                if (fileType.equals("xls")) {
+                    wb = new HSSFWorkbook();
+
+                } else if(fileType.equals("xlsx")) {
+                    wb = new XSSFWorkbook();
+
+                } else {
+                    throw new RuntimeException("文件格式不正确");
+                }
+            }
+            //创建sheet对象
+            if (sheet==null) {
+                sheet = (Sheet) wb.createSheet("锚点原文对应表");
+            }
+
+            //添加表头
+            Row row = sheet.createRow(0);
+            Cell cell;
+            for(int i = 0;i < titleRow.length;i++){
+                cell = row.createCell(i);
+                cell.setCellValue(titleRow[i]);
+            }
+            Iterator<String> keys = anchorOriginalMap.keySet().iterator();
+            int rowIndex = 0;
+            while(keys.hasNext()){
+                String key = keys.next();
+                String value = anchorOriginalMap.get(key);
+                row = sheet.createRow(++rowIndex);
+                cell = row.createCell(0);
+                cell.setCellValue(key);
+                cell = row.createCell(1);
+                cell.setCellValue(anchorCountMap.get(key));
+                cell = row.createCell(2);
+                cell.setCellValue(value);
+            }
+
+            //创建文件流
+            OutputStream stream = new FileOutputStream(excelPath);
+            //写入数据
+            wb.write(stream);
+            //关闭文件流
+            stream.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
     private int updateDatabase(List<MedicalContentSplitModel> update){
         int result = 0;
         for(int i = 0; i < update.size(); i++){

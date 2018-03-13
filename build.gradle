@@ -57,6 +57,7 @@ dependencies {
 		exclude(module: 'commons-logging')
 	}
 	compile 'org.springframework.boot:spring-boot-starter-mail'
+	compile group: 'org.apache.stratos', name: 'net.schmizz.sshj', version: '0.8.1'
 }
 
 configurations {
