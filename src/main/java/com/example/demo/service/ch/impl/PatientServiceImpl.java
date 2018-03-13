@@ -32,8 +32,8 @@ public class PatientServiceImpl extends BaseService {
         boolean isFinish = false;
         Long count = 0L;
         while (!isFinish) {
-            List<Patient> patientList = patientDao.findAllPatients(dataSource, pageNum, PAGE_SIZE);
-            if (patientList != null && patientList.size() < PAGE_SIZE) {
+            List<Patient> patientList = patientDao.findAllPatients(dataSource, pageNum, getPageSize());
+            if (patientList != null && patientList.size() < getPageSize()) {
                 isFinish = true;
             }
             if (patientList == null || patientList.isEmpty()) {
@@ -64,9 +64,8 @@ public class PatientServiceImpl extends BaseService {
         Patient patient = (Patient) entity;
         JSONObject jsonObj = new JSONObject();
         jsonObj.put(Patient.ColumnMapping.ID.value(), patient.getPatientId());
-        jsonObj.put(Patient.ColumnMapping.BATCH_NO.value(), "shch20180208");
+        jsonObj.put(Patient.ColumnMapping.BATCH_NO.value(), "shch20180309");
         jsonObj.put(Patient.ColumnMapping.HOSPITAL_ID.value(), "57b1e21fd897cd373ec7a14f");
-//        jsonObj.put(Patient.ColumnMapping.SOURCE.value(), "mysql上传系统");
         jsonObj.put(Patient.ColumnMapping.SEX.value(), patient.getSex());
         jsonObj.put(Patient.ColumnMapping.AGE.value(), patient.getAge());
         jsonObj.put(Patient.ColumnMapping.BIRTHDAY.value(), patient.getBirthDay());

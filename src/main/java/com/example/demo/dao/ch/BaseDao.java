@@ -3,15 +3,19 @@ package com.example.demo.dao.ch;
 import com.example.demo.common.dao.GenericDao;
 import com.example.demo.config.MongoDataSourceConfig;
 import com.example.demo.config.MysqlDataSourceConfig;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 
 @Slf4j
+@PropertySource("classpath:config/dao.properties")
 public abstract class BaseDao extends GenericDao {
 
     @Autowired

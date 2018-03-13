@@ -2,9 +2,9 @@ package com.example.demo.dao.ch.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IAssayDao;
+import com.example.demo.dao.ch.IMicroorganismDao;
 import com.example.demo.entity.Record;
-import com.example.demo.entity.ch.Assay;
+import com.example.demo.entity.ch.Microorganism;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -19,20 +19,20 @@ import java.util.List;
 
 @Slf4j
 @Repository
-public class AssayDaoImpl extends BaseDao implements IAssayDao {
+public class MicroorganismDaoImpl extends BaseDao implements IMicroorganismDao {
 
     @Override
-    public List<Record> findAssayRecord(String dataSource, int PageNum, int PageSize) {
+    public List<Record> findMicroorganismRecord(String dataSource, int PageNum, int PageSize) {
         return super.queryForList(getJdbcTemplate(dataSource), PageNum, PageSize);
     }
 
     @Override
-    public List<Assay> findAssaysByApplyId(String dataSource, String applyId) {
-        log.debug("findAssaysByApplyId(): 查找化验报告通过检验申请号: " + applyId);
-        String sql = "select t.`检验时间` AS 'assayTime',t.`项目名称` AS 'assayName',t.`结果正常标志` AS 'resultFlag',t.`检验结果` AS 'assayResult',t.`检验值` AS 'assayValue',t.`单位` AS 'assayUnit',t.`标本` AS 'assaySpecimen',t.`参考范围` AS 'referenceRange',t.`检验状态` AS 'assayState',t.`检验方法名称` AS 'assayMethodName' from `检验报告明细` t where t.`检验申请号`=?";
+    public List<Microorganism> findMicroorganismByApplyId(String dataSource, String applyId) {
+        log.debug("findMicroorganismByApplyId(): 查找微生物报告通过检验申请号: " + applyId);
+        String sql = "select `一次就诊号` AS 'groupRecordName',`检验方法编码` AS 'validateMethodCode',`检验时间` AS 'checkDate',`检验申请号` AS 'checkApplyNo',`微生物代码` AS 'microorganismCode',`微生物培养结果` AS 'microorganismGrowResult',`检验值` AS 'checkValue',`检验结果` AS 'checkResult',`抗生素名称` AS 'antibioticName',`微生物名称` AS 'microorganismName',`项目名称` AS 'projectName',`备注` AS 'remark' from `微生物报告明细` where `检验申请号`=? ";
         JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
-        List<Assay> assays = jdbcTemplate.query(sql, new BeanPropertyRowMapper(Assay.class), applyId);
-        return assays;
+        List<Microorganism> Microorganisms = jdbcTemplate.query(sql, new BeanPropertyRowMapper(Microorganism.class), applyId);
+        return Microorganisms;
     }
 
     @Override
@@ -48,14 +48,6 @@ public class AssayDaoImpl extends BaseDao implements IAssayDao {
     }
 
     @Override
-    public JSONObject findRecordByIdInHRS(String applyId) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(applyId));
-        JSONObject record = hrsMongoTemplate.findOne(query, JSONObject.class, "Record");
-        return record;
-    }
-
-    @Override
     public String findPatientIdByGroupRecordName(String dataSource, String groupRecordName) {
         log.debug("findPatientIdByGroupRecordName(): 查找PatientId通过一次就诊号: " + groupRecordName);
         String sql = "select t.`病人ID号` from `患者基本信息` t where t.`一次就诊号`= ? group by t.`一次就诊号`";
@@ -66,19 +58,19 @@ public class AssayDaoImpl extends BaseDao implements IAssayDao {
 
     @Override
     protected String generateQuerySql() {
-        String sql = "select t.`一次就诊号` AS 'groupRecordName',t.`检验申请号` AS 'applyId' from `检验报告明细` t GROUP BY t.`检验申请号` ";
+        String sql = "select t.`一次就诊号` AS 'groupRecordName',t.`检验申请号` AS 'applyId' from `微生物报告明细` t GROUP BY t.`检验申请号` ";
         return sql;
     }
 
     @Override
     protected RowMapper<Record> generateRowMapper() {
         if (getRowMapper() == null) {
-            setRowMapper(new AssayRowMapper());
+            setRowMapper(new MicroorganismRowMapper());
         }
         return getRowMapper();
     }
 
-    class AssayRowMapper implements RowMapper<Record> {
+    class MicroorganismRowMapper implements RowMapper<Record> {
 
         @Override
         public Record mapRow(ResultSet rs, int rowNum) throws SQLException {

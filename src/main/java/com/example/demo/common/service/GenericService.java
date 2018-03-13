@@ -2,7 +2,6 @@ package com.example.demo.common.service;
 
 public abstract class GenericService {
 
-    public final static int PAGE_SIZE = 1000;
     public final static String EMPTY_FLAG = "";
     public final static String OD_CATEGORY = "糖尿病";
     public final static String OD_CATEGORIE_JKCT = "健康查体";

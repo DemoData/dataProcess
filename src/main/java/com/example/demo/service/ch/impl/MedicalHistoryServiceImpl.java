@@ -7,6 +7,7 @@ import com.example.demo.entity.Record;
 import com.example.demo.entity.ch.MedicalHistory;
 import com.example.demo.service.ch.BaseService;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -34,8 +35,8 @@ public class MedicalHistoryServiceImpl extends BaseService {
         Map<String, List<String>> orgOdCatCaches = new HashMap<>();
         while (!isFinish) {
             //总共的records
-            List<MedicalHistory> medicalHistories = medicalHistoryDao.findMedicalHistoryRecord(dataSource, pageNum, PAGE_SIZE);
-            if (medicalHistories != null && medicalHistories.size() < PAGE_SIZE) {
+            List<MedicalHistory> medicalHistories = medicalHistoryDao.findMedicalHistoryRecord(dataSource, pageNum, getPageSize());
+            if (medicalHistories != null && medicalHistories.size() < getPageSize()) {
                 isFinish = true;
             }
             if (medicalHistories == null || medicalHistories.isEmpty()) {
@@ -63,11 +64,13 @@ public class MedicalHistoryServiceImpl extends BaseService {
                 JSONObject beanJson = bean2Json(record);
                 //不需要id
                 beanJson.remove("id");
+                beanJson.put("_id", new ObjectId().toString());
                 jsonList.add(beanJson);
-                count++;
-                log.info("Processed " + count);
             }
-//            count += jsonList.size();
+            if(orgOdCatCaches.size()>50000){
+                orgOdCatCaches.clear();
+            }
+            count += jsonList.size();
             log.info("inserting medicalHistory record total count: " + jsonList.size());
             //把找到的record插入到mongodb hrs record中
             medicalHistoryDao.batchInsert2HRS(jsonList, "Record");
@@ -110,7 +113,6 @@ public class MedicalHistoryServiceImpl extends BaseService {
         record.setHospitalId("57b1e21fd897cd373ec7a14f");
         record.setUserId("5a7c0adcc2f9c4944dd2b070");
         record.setBatchNo("shch20180309");
-        record.setTemplateId(EMPTY_FLAG);
         record.setDepartment("检验科");
         record.setFormat("text");
         record.setDeleted(false);

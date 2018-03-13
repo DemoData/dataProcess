@@ -1,6 +1,7 @@
 package com.example.demo.entity;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo.constant.CommonConstant;
 import lombok.Data;
 
 import javax.persistence.Entity;
@@ -32,15 +33,33 @@ public class Record {
     private String status;
 
     public Record() {
+        initial();
+    }
+
+    private void initial() {
         //init info
         List<Map<String, String>> detailArray = new ArrayList<>();
         List<Map<String, String>> formattedText = new ArrayList<>();
         List<Map<String, String>> table = new ArrayList<>();
         this.info.put("basicInfo", new JSONObject());
         this.info.put("detailArray", detailArray);
-        this.info.put("text", "");
-        this.info.put("textARS", "");
+        this.info.put("text", CommonConstant.EMPTY_FLAG);
+        this.info.put("textARS", CommonConstant.EMPTY_FLAG);
         this.info.put("formattedText", formattedText);
         this.info.put("table", table);
+        this.hospitalId = CommonConstant.EMPTY_FLAG;
+        this.userId = CommonConstant.EMPTY_FLAG;
+        this.groupRecordName = CommonConstant.EMPTY_FLAG;
+        this.patientId = CommonConstant.EMPTY_FLAG;
+        this.batchNo = CommonConstant.EMPTY_FLAG;
+        this.templateId = CommonConstant.EMPTY_FLAG;
+        this.department = CommonConstant.EMPTY_FLAG;
+        this.recordType = CommonConstant.EMPTY_FLAG;
+        this.subRecordType = CommonConstant.EMPTY_FLAG;
+        this.sourceId = CommonConstant.EMPTY_FLAG;
+        this.format = CommonConstant.EMPTY_FLAG;
+        this.source = CommonConstant.EMPTY_FLAG;
+        this.status = CommonConstant.EMPTY_FLAG;
+        this.sourceRecordType = CommonConstant.EMPTY_FLAG;
     }
 }

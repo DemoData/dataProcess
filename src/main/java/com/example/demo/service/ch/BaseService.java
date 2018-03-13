@@ -4,18 +4,28 @@ import com.alibaba.fastjson.JSONObject;
 import com.example.demo.common.service.GenericService;
 import com.example.demo.config.MysqlDataSourceConfig;
 import com.example.demo.service.IDataService;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 @Slf4j
+@PropertySource("classpath:config/service.properties")
 public abstract class BaseService extends GenericService implements IDataService {
+
+    @Value("${page.size}")
+    private int pageSize;
 
     @Override
     public boolean processData() {
         try {
             //execute data process in every dataSource
-//            this.process(MysqlDataSourceConfig.MYSQL_YXZW_DATASOURCE);
-//            this.process(MysqlDataSourceConfig.MYSQL_JKCT_DATASOURCE);
-//            this.process(MysqlDataSourceConfig.MYSQL_TNB_DATASOURCE);
+            this.process(MysqlDataSourceConfig.MYSQL_YXZW_DATASOURCE);
+            this.process(MysqlDataSourceConfig.MYSQL_JKCT_DATASOURCE);
+            this.process(MysqlDataSourceConfig.MYSQL_TNB_DATASOURCE);
             this.process(MysqlDataSourceConfig.MYSQL_YX_DATASOURCE);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -62,4 +72,12 @@ public abstract class BaseService extends GenericService implements IDataService
      * @return
      */
     protected abstract JSONObject bean2Json(Object entity);
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        this.pageSize = pageSize;
+    }
 }

@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.util.StringUtils;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -51,6 +52,12 @@ public class TextFormatter {
             Map<String, Object> row = new HashMap<>();
             PropertyDescriptor pd = new PropertyDescriptor(propName, bean.getClass());
             Object value = pd.getReadMethod().invoke(bean);
+            if (value == null) {
+                continue;
+            }
+            if (value instanceof String && StringUtils.isEmpty(((String) value).trim())) {
+                continue;
+            }
             row.put(columnName, value);
             infoList.add(row);
         }
@@ -76,13 +83,13 @@ public class TextFormatter {
         try {
             //制定需要获取的列
             List<Integer> list = new ArrayList<>();
-            for(int i = 0; i <= 23; i++){
-                if(i != 0 && i != 2 && i != 3){
+            for (int i = 0; i <= 23; i++) {
+                if (i != 0 && i != 2 && i != 3) {
                     list.add(i);
                 }
             }
             //获取Excel中的锚点
-            ArrayList<String> anchorList = readExcelContent(ANCHOR_EXCEL_PATH,0, list);
+            ArrayList<String> anchorList = readExcelContent(ANCHOR_EXCEL_PATH, 0, list);
             formattedText = addAnchor(text, anchorList);
         } catch (IOException e) {
             e.printStackTrace();
@@ -167,7 +174,7 @@ public class TextFormatter {
                 row = sheet.getRow(i);
                 int j = 0;
                 while (j < colNum) {
-                    if(readColList.contains(j)){
+                    if (readColList.contains(j)) {
                         str = getCellFormatValue(row.getCell((short) j)).trim();
                         if (str.length() > 0) {
                             content.add(str);

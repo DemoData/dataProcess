@@ -9,4 +9,5 @@ public class CommonConstant {
     public static final String RECORD_DATE = "记录日期";
     public static final String MEDICAL_NAME = "病历名称";
     public static final String UPDATE_CONTENT = "更新内容";
+    public static final String EMPTY_FLAG = "";
 }

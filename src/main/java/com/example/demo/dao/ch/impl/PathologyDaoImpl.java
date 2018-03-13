@@ -18,7 +18,7 @@ public class PathologyDaoImpl extends BaseDao implements IPathologyDao {
 
     @Override
     protected String generateQuerySql() {
-        String sql = "select * from `病理`";//TODO
+        String sql = "select * from `病理`";//TODO: 待优化成beanPropertyRowMapper的形式
         return sql;
     }
 
