@@ -20,4 +20,16 @@ public interface ICHYXDao {
     int forbid(MedicalContentSplitModel medicalContentSplitModel);
 
     void add(Map<String, Object> map);
+
+    void changeJdbcTemplate(String type) throws Exception;
+
+    List<String> datacul(String sql);
+
+    Integer dataculAdd(String sql);
+
+    void addCheckDetail(List<String> headList, List<Map<String, Object>> data);
+
+    void executeSql(String sql);
+
+    List<Map<String, Object>> groupCount(String sql);
 }

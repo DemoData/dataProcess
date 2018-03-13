@@ -43,6 +43,12 @@ public class TimeUtil {
         return Long.valueOf(date.substring(0,19).replaceAll("-", "").replaceAll(":", "").replaceAll(" ", ""));
     }
 
+
+    public static Long txtDateStringToLong(String date){
+        Date formatDate = new Date(date);
+        return formatDate.getTime()/1000;
+    }
+
     public static Long dateStringToMillis(String dateString) {
         Date date;
         try {
@@ -129,6 +135,8 @@ public class TimeUtil {
 
 
     public static void main(String[] args) {
+        Date date = new Date("");
+        System.out.println(date.getTime());
         System.out.println(medicalContentTimeFormat("2016-05-2717:33"));
     }
 }

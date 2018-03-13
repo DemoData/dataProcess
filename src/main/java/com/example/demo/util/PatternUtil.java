@@ -4,11 +4,13 @@ import java.util.regex.Pattern;
 
 public class PatternUtil {
 
-    public static Pattern MEDICAL_CONTENT_SPLIT_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{4}:\\d{2}[^:]");
+    public static Pattern MEDICAL_CONTENT_SPLIT_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{4}:\\d{2}[^::、)）,，。]");
+    public static Pattern MEDICAL_CONTENT_TXT_SPLIT_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}[^:、)）,，。]");
     public static Pattern EMPTY_PATTERN = Pattern.compile("\\s*|\t|\r|\n");
+    public static Pattern DATE_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
     public static Long medicalContentSplitPatternToInt(String str){
-        return Long.valueOf(str.replaceAll("-", "").replaceAll(":", ""));
+        return Long.valueOf(str.replaceAll("-", "").replaceAll(":", "").replaceAll(" ", ""));
     }
 
     public static void main(String[] args) {

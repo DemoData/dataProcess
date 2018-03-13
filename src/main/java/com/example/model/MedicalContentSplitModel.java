@@ -10,4 +10,5 @@ public class MedicalContentSplitModel {
     private String visitNumber;
     private String createDate;
     private String medicalContent;
+    private Integer status;
 }
