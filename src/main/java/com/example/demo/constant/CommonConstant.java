@@ -17,4 +17,5 @@ public class CommonConstant {
     public static final String TNB = "tnb";
     public static final String JKCT = "jkct";
     public static final String YXZW = "yxzw";
+    public static final String EMPTY_FLAG = "";
 }

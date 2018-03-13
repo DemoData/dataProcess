@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.IPatientService;
+import com.example.demo.service.IDataService;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class PatientProcessController {
 
     @Autowired
-    private IPatientService patientService;
+    private IDataService patientService;
 
     @GetMapping("/processPatientData")
     public boolean processPatientData() {
-        return patientService.processPatientData();
+        try {
+            return patientService.processData();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
 }

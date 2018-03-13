@@ -17,7 +17,7 @@ import java.util.List;
  * @date 2018.02.27
  */
 @Slf4j
-@Repository
+@Repository("patientDao")
 public class PatientDaoImpl implements IPatientDao {
 
     @Autowired
