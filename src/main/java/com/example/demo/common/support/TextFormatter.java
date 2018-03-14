@@ -29,6 +29,23 @@ public class TextFormatter {
     public final static String TEXT_ARS = "textARS";
     public final static String ANCHOR_EXCEL_PATH = "/data/hitales/SHCHRK/技术用-症状&体征-锚点使用.xlsx";
 
+    public static ArrayList<String> anchorList = null;
+
+    static {
+        //制定需要获取的列
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i <= 23; i++) {
+            if (i != 0 && i != 2 && i != 3) {
+                list.add(i);
+            }
+        }
+        //获取Excel中的锚点
+        try {
+            anchorList = readExcelContent(ANCHOR_EXCEL_PATH, 0, list);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private TextFormatter() {
     }
@@ -81,18 +98,7 @@ public class TextFormatter {
     public static String formatTextByAnchaor(String text) {
         String formattedText = null;
         try {
-            //制定需要获取的列
-            List<Integer> list = new ArrayList<>();
-            for (int i = 0; i <= 23; i++) {
-                if (i != 0 && i != 2 && i != 3) {
-                    list.add(i);
-                }
-            }
-            //获取Excel中的锚点
-            ArrayList<String> anchorList = readExcelContent(ANCHOR_EXCEL_PATH, 0, list);
             formattedText = addAnchor(text, anchorList);
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,29 +128,13 @@ public class TextFormatter {
                     lines.getObject(k, LineItem.class), k < lines.size() - 1 ? lines.getObject(k + 1, LineItem.class) : null, anchors);
             splitAnchor.tagAnchor();
         }
-//        Set<String> tempAnchor = new HashSet<>();
         StringBuilder sbu = new StringBuilder();
         for (int k = 0; k < lines.size(); k++) {
             LineItem lineItem = lines.getObject(k, LineItem.class);
             String tempStr = lineItem.getLineWithAnchorBlackBracket(k, null);
-            /*ArrayList<AnchorInfo> anchorInfos = lineItem.anchorInfos;
-            for (AnchorInfo anchorInfo : anchorInfos) {
-                if (!anchorOriginalMap.containsKey(anchorInfo.anchor)) {
-                    anchorOriginalMap.put(anchorInfo.anchor, tempStr);
-                    anchorCountMap.put(anchorInfo.anchor, 1);
-                    tempAnchor.add(anchorInfo.anchor);
-                } else {
-                    anchorCountMap.put(anchorInfo.anchor, anchorCountMap.get(anchorInfo.anchor) + 1);
-                }
-            }*/
             sbu.append(tempStr).append("\n");
-            //sbu.append(tempStr);
         }
         String result = sbu.toString().replaceAll("\\d【【记录时间】】", "【【记录时间】】").replaceAll("【【时间结束标记】】", "");
-        /*for (String value : tempAnchor) {
-            anchorOriginalMap.put(value, result);
-        }*/
-        //System.out.println(sbu.toString());
         return result;
     }
 
