@@ -8,11 +8,8 @@ import java.util.List;
 /**
  * @author aron
  */
-public interface IPathologyDao {
-
-    List<Pathology> findPathologyRecord(String dataSource, int pageNum, int pageSize);
+public interface IPathologyDao extends TextDao<Pathology> {
 
     List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName);
 
-    void batchInsert2HRS(List<JSONObject> records, String collectionName);
 }

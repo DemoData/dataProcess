@@ -1,21 +1,17 @@
 package com.example.demo.dao.ch;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.entity.ch.Patient;
 
 import java.util.List;
 
 /**
  * @author aron
  */
-public interface IPatientDao {
-
-    JSONObject findPatientByIdInHRS(String pid);
-
-    List<Patient> findPatients(String dataSource, int pageNum, int pageSize);
-
+public interface TextDao<T> {
     void batchInsert2HRS(List<JSONObject> records, String collectionName);
 
     Integer getCount(String dataSource);
+
+    List<T> findRecord(String dataSource, int pageNum, int pageSize);
 
 }

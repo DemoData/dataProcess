@@ -10,6 +10,8 @@ public class Assay {
 
     private String id;//id
     private String onceClinicId;//一次就诊号
+    private String patientId;//病人ID号
+    private String hospitalId;//住院号
     private String assayId;//检验申请号
     private String assayTime;//检验时间
     private String assayName;//项目名称
