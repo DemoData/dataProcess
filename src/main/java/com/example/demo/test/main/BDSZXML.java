@@ -1,12 +1,11 @@
 package com.example.demo.test.main;
 
 import com.example.demo.common.support.TextFormatter;
-import com.example.demo.util.StringUtil;
+import com.example.demo.common.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
-import java.util.ArrayList;
 
 public class BDSZXML {
 
