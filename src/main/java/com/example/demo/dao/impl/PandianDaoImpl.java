@@ -32,7 +32,13 @@ public class PandianDaoImpl implements PandianDao {
     }
 
     @Override
-    public List<JSONObject> findCountByQuery(Query query, String collectionName) {
+    public List<JSONObject> findListByQuery(Query query, String collectionName) {
         return hrsMongoTemplate.find(query, JSONObject.class, collectionName);
     }
+
+    @Override
+    public Integer findCountByQuery(Query query, String collectionName) {
+        return (int)hrsMongoTemplate.count(query, collectionName);
+    }
+
 }

@@ -14,6 +14,7 @@ buildscript {
 allprojects {
 	repositories {
 		maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
+        maven { url 'http://clojars.org/repo/'}
 		mavenCentral()
 	}
 }
@@ -26,6 +27,18 @@ group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 archivesBaseName = "demo"
+
+jar{
+
+	baseName = "PatientDemo"
+
+	version   =  "1.0"
+	manifest {
+		attributes 'Main-Class': 'com.example.demo.test.main.UpdateMain'
+		attributes 'Class-Path': 'PatientDemo-1.0.jar'
+	}
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
 
 repositories {
 	mavenCentral()
@@ -58,6 +71,7 @@ dependencies {
 	}
 	compile 'org.springframework.boot:spring-boot-starter-mail'
 	compile group: 'org.apache.stratos', name: 'net.schmizz.sshj', version: '0.8.1'
+	compile group: 'com.aliasi', name: 'lingpipe', version: '4.0.1'
 }
 
 configurations {

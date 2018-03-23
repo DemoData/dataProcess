@@ -446,8 +446,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         }
     }
 
-    private Map<String, Integer[]> groupCount(String sql) {
-        Map<String, Integer[]> result = new HashMap<>();
+    private void groupCount(Map<String, Integer[]> result, String sql, String mapping) {
         try{
             ichyxDao.changeJdbcTemplate(CommonConstant.JKCT);
             List<Map<String, Object>> jkct = ichyxDao.groupCount(sql);
@@ -462,24 +461,42 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             jkct.addAll(tnb);
             for(Map<String, Object> value : jkct){
                 String id = (String)value.get("病人ID号");
-                String mapping = (String)value.get("mapping");
+                if(value.containsKey("mapping")){
+                    mapping = (String)value.get("mapping");
+                }
                 Integer count = ((Long)value.get("num")).intValue();
                 if(!result.containsKey(id)) {
-                    Integer[] arr = new Integer[2];
-                    arr[0] = 0;
-                    arr[1] = 0;
+                    Integer[] arr = new Integer[10];
+                    for(int i = 0; i < 10; i++){
+                        arr[i] = 0;
+                    }
                     result.put(id, arr);
                 }
                 if(mapping.startsWith("入院记录")){
                     result.get(id)[0] += count;
                 }else if(mapping.startsWith("出院记录")){
                     result.get(id)[1] += count;
+                }else if(mapping.startsWith("化验记录")){
+                    result.get(id)[2] += count;
+                }else if(mapping.startsWith("检查记录_表格")){
+                    result.get(id)[3] += count;
+                }else if(mapping.startsWith("检查记录")){
+                    result.get(id)[4] += count;
+                }else if(mapping.startsWith("手术操作记录")){
+                    result.get(id)[5] += count;
+                }else if(mapping.startsWith("治疗方案")){
+                    result.get(id)[6] += count;
+                }else if(mapping.startsWith("门诊记录")){
+                    result.get(id)[7] += count;
+                }else if(mapping.startsWith("其他记录")){
+                    result.get(id)[8] += count;
+                }else if(mapping.startsWith("病理")){
+                    result.get(id)[9] += count;
                 }
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-        return result;
     }
 
     @Override
@@ -512,7 +529,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 ichyxDao.changeJdbcTemplate(CommonConstant.YX);
                 ichyxDao.executeSql("load data local infile \"" + filePath + "\" into table `检验报告明细`\n" +
                         "fields TERMINATED by '#$#' \n" +
-                        "LINES TERMINATED by '\\n'");
+                        "LINES TERMINATED by '\n'");
 //                int count = result.size() / 1000;
 //                if(result.size() % 1000 != 0){
 //                    count += 1;
@@ -541,11 +558,39 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         Set<String> visitNumSet = datacul(sql);
         sql = "select count(一次就诊号) from 病历文书 where mapping like '入院记录%'";
         int ruyuancount = dataculAdd(sql);
+        jsonObject.put("入院记录", ruyuancount);
         sql = "select count(一次就诊号) from 病历文书 where mapping like '出院记录%'";
         int chuyuancount = dataculAdd(sql);
-        jsonObject.put("入院记录", ruyuancount);
         jsonObject.put("出院记录", chuyuancount);
         jsonObject.put("病历记录汇总", (ruyuancount + chuyuancount));
+        sql = "select count(distinct 检验申请号) from 检验报告明细";
+        int huayan = dataculAdd(sql);
+        sql = "select count(distinct 检验申请号) from 微生物报告明细";
+        huayan += dataculAdd(sql);
+        jsonObject.put("化验记录", huayan);
+        jsonObject.put("表格病历", huayan);
+        sql = "select count(一次就诊号) from 检查报告";
+        int jianchaTable = dataculAdd(sql);
+        jsonObject.put("检查记录_表格", jianchaTable);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '检查记录%'";
+        int jianchaText = dataculAdd(sql);
+        jsonObject.put("检查记录_文本", jianchaText);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '手术操作记录%'";
+        int shoushu = dataculAdd(sql);
+        jsonObject.put("手术操作记录", shoushu);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '治疗方案%'";
+        int zhiliao = dataculAdd(sql);
+        jsonObject.put("治疗方案", zhiliao);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '门诊记录%'";
+        int menzhen = dataculAdd(sql);
+        jsonObject.put("门诊记录", menzhen);
+        sql = "select count(一次就诊号) from 病历文书 where mapping like '其他记录%'";
+        int other = dataculAdd(sql);
+        jsonObject.put("其他记录", other);
+        sql = "select count(*) from 病理";
+        int bingli = dataculAdd(sql);
+        jsonObject.put("病理", bingli);
+
         jsonObject.put("住院号总数", visitNumSet.size());
         sql = "select distinct 一次就诊号 from 病历文书 where mapping like '入院记录%'";
         Set<String> ruyuan = datacul(sql);
@@ -554,7 +599,16 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         ruyuan.retainAll(chuyuan);
         jsonObject.put("单次完整出入院盘点", ruyuan.size());
         sql = "select 病人ID号,mapping,count(*) num from 病历文书 where mapping is not null group by 病人ID号,mapping";
-        Map<String, Integer[]> result = groupCount(sql);
+        Map<String, Integer[]> result = new HashMap<>();
+        groupCount(result, sql, null);
+        sql = "select b.病人ID号 病人ID号, count(distinct a.检验申请号) num from 检验报告明细 a left join `患者基本信息` b on a.`一次就诊号` = b.`一次就诊号` group by b.`病人ID号`";
+        groupCount(result, sql, "化验记录");
+        sql = "select b.病人ID号 病人ID号, count(distinct a.检验申请号) num from 微生物报告明细 a left join `患者基本信息` b on a.`一次就诊号` = b.`一次就诊号` group by b.`病人ID号`";
+        groupCount(result, sql, "化验记录");
+        sql = "select 病人ID号, count(*) num from 检查报告 group by 病人ID号";
+        groupCount(result, sql, "检查记录_表格");
+        sql = "select 病人ID号, count(*) num from 病理 group by 病人ID号";
+        groupCount(result, sql, "病理");
         List<String> notFoungList = new ArrayList<>();
         for(String key : result.keySet()){
             if(!userSet.contains(key)){
@@ -564,11 +618,32 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         jsonObject.put("出入院未找到患者ID列表", notFoungList);
         for(String key : userSet){
             if(!result.containsKey(key)){
-                result.put(key, new Integer[]{0,0});
+                result.put(key, initArr(10));
             }
         }
-        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单", "xlsx", result, new String[]{"PID", "入院记录", "出院记录"});
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾",
+                "住院详单", "xlsx", result, CommonConstant.RECORD_TYPE);
         return jsonObject;
+    }
+
+    private void processJSONObjectList(List<JSONObject> jsonObjectList, Set<String> singleSet, Set<String> allSet,
+                                       Map<String, String> anchorOriginalMap, Map<String ,Integer> anchorCountMap){
+        for(JSONObject value : jsonObjectList){
+            String groupRecordName =value.getString("groupRecordName");
+            allSet.add(groupRecordName);
+            singleSet.add(groupRecordName);
+            String text = value.getJSONObject("info").getString("text");
+            Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
+            while(matcher.find()){
+                String anchor = matcher.group(1);
+                if(!anchorCountMap.containsKey(anchor)){
+                    anchorCountMap.put(anchor, 1);
+                    anchorOriginalMap.put(anchor, text);
+                }else{
+                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
+                }
+            }
+        }
     }
 
     @Override
@@ -588,55 +663,29 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         fieldObject.put("groupRecordName", true);
         fieldObject.put("info.text", true);
         Query ruyuanQuery = new BasicQuery(dbObject, fieldObject);
-        List<JSONObject> ruyuan = pandianDao.findCountByQuery(ruyuanQuery, "Record");
+        List<JSONObject> ruyuan = pandianDao.findListByQuery(ruyuanQuery, "Record");
         jsonObject.put("入院记录", ruyuan.size());
+        System.out.println(jsonObject);
         DBObject chuyuanObject = new BasicDBObject();
         chuyuanObject.put("batchNo", batchNo);
         chuyuanObject.put("recordType", "出院记录");
         Query chuyuanQuery = new BasicQuery(chuyuanObject, fieldObject);
-        List<JSONObject> chuyuan = pandianDao.findCountByQuery(chuyuanQuery, "Record");
+        List<JSONObject> chuyuan = pandianDao.findListByQuery(chuyuanQuery, "Record");
         jsonObject.put("出院记录", chuyuan.size());
-        jsonObject.put("病历记录汇总", chuyuan.size() + ruyuan.size());
+        jsonObject.put("病历记录汇总", pandianDao.findCountByQuery(new Query().addCriteria(Criteria.where("batchNo").is(batchNo)), "Record"));
+        System.out.println(jsonObject);
         Set<String> groupRecordNameSet = new HashSet<>();
         Set<String> ruyuanSet =new HashSet<>();
         Set<String> chuyuanSet = new HashSet<>();
         Map<String, String> anchorOriginalMap = new HashMap<>();
         Map<String ,Integer> anchorCountMap = new HashMap<>();
-        for(JSONObject value : ruyuan){
-            String groupRecordName =value.getString("groupRecordName");
-            groupRecordNameSet.add(groupRecordName);
-            ruyuanSet.add(groupRecordName);
-            String text = value.getJSONObject("info").getString("text");
-            Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
-            while(matcher.find()){
-                String anchor = matcher.group(1);
-                if(!anchorCountMap.containsKey(anchor)){
-                    anchorCountMap.put(anchor, 1);
-                    anchorOriginalMap.put(anchor, text);
-                }else{
-                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
-                }
-            }
-        }
-        for(JSONObject value : chuyuan){
-            String groupRecordName =value.getString("groupRecordName");
-            groupRecordNameSet.add(groupRecordName);
-            chuyuanSet.add(groupRecordName);
-            String text = value.getJSONObject("info").getString("text");
-            Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
-            while(matcher.find()){
-                String anchor = matcher.group(1);
-                if(!anchorCountMap.containsKey(anchor)){
-                    anchorCountMap.put(anchor, 1);
-                    anchorOriginalMap.put(anchor, text);
-                }else{
-                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
-                }
-            }
-        }
+        processJSONObjectList(ruyuan, ruyuanSet, groupRecordNameSet, anchorOriginalMap, anchorCountMap);
+        processJSONObjectList(chuyuan, chuyuanSet, groupRecordNameSet, anchorOriginalMap, anchorCountMap);
         jsonObject.put("住院号总数", groupRecordNameSet.size());
+        System.out.println(jsonObject);
         ruyuanSet.retainAll(chuyuanSet);
         jsonObject.put("单次完整出入院盘点", ruyuanSet.size());
+        System.out.println(jsonObject);
         Set<String> notFoundSet =new HashSet<>();
         Map<String, Integer[]> result =new HashMap<>();
         for(JSONObject value : ruyuan){
@@ -645,7 +694,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 notFoundSet.add(id);
             }
             if(!result.containsKey(id)){
-                result.put(id, new Integer[]{0,0});
+                result.put(id, initArr(10));
 
             }
             result.get(id)[0] += 1;
@@ -656,16 +705,63 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 notFoundSet.add(id);
             }
             if(!result.containsKey(id)){
-                result.put(id, new Integer[]{0,0});
-
+                result.put(id, initArr(10));
             }
             result.get(id)[1] += 1;
         }
+        for(int i = 3; i < CommonConstant.RECORD_TYPE.length; i++){
+            System.out.println(CommonConstant.RECORD_TYPE[i]);
+            DBObject loopFieldObject = new BasicDBObject();
+            loopFieldObject.put("patientId", true);
+            DBObject loopQueryObject = new BasicDBObject();
+            loopQueryObject.put("batchNo", batchNo);
+            if("检查记录_表格".equals(CommonConstant.RECORD_TYPE[i])){
+                loopQueryObject.put("recordType", "检查记录");
+                loopQueryObject.put("format", "table");
+            }else if("检查记录_文本".equals(CommonConstant.RECORD_TYPE[i])){
+                loopQueryObject.put("recordType", "检查记录");
+                loopQueryObject.put("format", "text");
+            }else{
+                loopQueryObject.put("recordType", CommonConstant.RECORD_TYPE[i]);
+            }
+            List<JSONObject> loopResult = pandianDao.findListByQuery(new BasicQuery(loopQueryObject, loopFieldObject), "Record");
+            jsonObject.put(CommonConstant.RECORD_TYPE[i], loopResult.size());
+            for(JSONObject value : loopResult){
+                String id =value.getString("patientId");
+                if(!userSet.contains(id)){
+                    notFoundSet.add(id);
+                }
+                if(!result.containsKey(id)){
+                    result.put(id, initArr(10));
+
+                }
+                result.get(id)[i - 1] += 1;
+            }
+        }
+        for(String key : userSet){
+            if(!result.containsKey(key)){
+                result.put(key, initArr(10));
+            }
+        }
+        jsonObject.put("表格病历", pandianDao.findCountByQuery(new Query()
+                .addCriteria(Criteria.where("batchNo").is(batchNo))
+                .addCriteria(Criteria.where("format").is("text")), "Record"));
+        //jsonObject.put("表格病历", jsonObject.getInteger("化验记录"));
         jsonObject.put("出入院未找到患者ID列表", notFoundSet);
         writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)", "xlsx", anchorOriginalMap, anchorCountMap, new String[]{"锚点", "数量", "原文"});
-        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单(mongo)", "xlsx", result, new String[]{"PID", "入院记录", "出院记录"});
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单(mongo)", "xlsx", result, CommonConstant.RECORD_TYPE);
         return jsonObject;
     }
+
+    private Integer[] initArr(int length){
+        Integer[] arr = new Integer[length];
+        for(int m = 0; m < length; m++){
+            arr[m] = 0;
+        }
+        return arr;
+    }
+
+
 
     private void writer(String path, String fileName,String fileType,Map<String, Integer[]> result,String titleRow[]) {
         try{
@@ -724,10 +820,10 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                     cell.setCellValue("shch_" + key);
                 }
                 Integer[] arr = result.get(key);
-                cell = row.createCell(1);
-                cell.setCellValue(arr[0]);
-                cell = row.createCell(2);
-                cell.setCellValue(arr[1]);
+                for(int i = 0; i < arr.length; i++){
+                    cell = row.createCell(i + 1);
+                    cell.setCellValue(arr[i]);
+                }
             }
 
             //创建文件流
@@ -802,7 +898,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 cell = row.createCell(1);
                 cell.setCellValue(anchorCountMap.get(key));
                 cell = row.createCell(2);
-                cell.setCellValue(value);
+                cell.setCellValue(value.replaceAll("【【", "\n【【"));
             }
 
             //创建文件流
@@ -934,7 +1030,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 
 
     public static void main(String[] args) throws Exception{
-        try{
+        /*try{
             List<String> headList = new ArrayList<>();
             File loadData = new File("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾/loadData.txt");
             if(!loadData.exists()){
@@ -969,7 +1065,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 
         }catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
         /*String test = "'2011/10/5 21:54','2011/10/5 11:00','2011/10/2 7:55','2011/9/20 12:28','2011/10/1 20:36','2011/9/28 14:46','2011/9/4 7:55','2011/9/24 17:28','2011/9/7 15:18','2011/9/5 15:26','2011/9/3 9:35','2011/9/2 13:54','2011/9/1 19:56','2011/9/1 19:56','2011/9/1 19:56','2011/9/1 19:55','2011/10/11 18:14','2011/9/1 19:33','2011/9/23 8:36','2011/9/22 8:49','2011/10/10 17:44','2011/10/9 21:29','2011/10/9 21:27','2011/10/8 10:37','2011/10/8 10:28','2011/10/4 8:23','2011/10/4 4:30','2011/10/4 4:16','2011/10/4 4:16','2011/10/1 20:44','2011/10/1 20:42','2011/9/21 20:46','2011/10/8 10:34','2011/10/8 10:32','2011/10/8 10:30','2011/9/21 10:52','2011/9/20 23:32','2011/9/20 10:54','2011/9/20 10:51','2011/9/14 10:17','2011/9/20 10:27','2011/9/7 15:11','2011/9/18 7:51','2011/9/16 8:26','2011/9/14 10:21','2011/9/14 10:12','2011/9/14 8:38','2011/9/8 10:35','2011/9/7 15:22','2011/9/27 8:36','2011/9/26 9:44','2011/9/26 9:39'";
         String[] testArr = test.split(",");
         List<String> timeList = new ArrayList<>();
@@ -1010,7 +1106,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 
         }
         System.out.println(sb.toString());*/
-        String medicalContent = "2011-06-09 11:13            　　首次病程记录  　朱庆如，女，72岁，已婚，汉族，安徽省人，家住上海市浦东新区芳甸路33弄10号702室。因“确诊胰腺癌5月余”门诊拟“胰腺癌”于2011-06-09收入我科。病例特点：1、老年女，慢性起病，治疗史明确，病程较长。2、患者缘于2011年1月无明显诱因出现中上腹胀，进食后明显，无恶心、呕吐，皮肤巩膜逐渐黄染，全身瘙痒，伴有浓茶样小便。1月9日于我院急诊行腹部B超诊断为\"肝内外胆管扩张\"，1月10日收住我院，CT、MRCP、EUS均提示胰腺占位，考虑胰腺癌伴胆道系统扩张。FNA液基培养找到癌细胞。2011-1-20日行ERCP并置入一5cm、8.5F塑料支架和一7cm、10F的粒子支架，粒子共10颗。2011-03-06日、03-13日、03-20日予泰欣生200mg静滴3次；2011-04-03日、04-10日、04-17日予泰欣生200mg治疗。患者1周前再次出现中上腹疼痛，呈持续性胀痛，伴恶心呕吐，呕吐物为胃内容物，无发热，查血常规WBC4.42*10^9/L,GRAN%75.5%,HGB108g/L。为进一步诊治门诊拟胰腺癌收治入院。3、查体：T 36.8℃，P 80bpm，R 20bpm，BP 120／80mmHg。神清，精神软，心肺未及异常，腹软，上腹部压痛明显，无反跳痛，肝脾肋下未及，肠鸣音正常，双下肢无水肿。4、辅助检查：（2011-06-02 我院）血常规WBC4.42*10^9/L,GRAN%75.5%,HGB108g/L。 根据上述病史特点：初步诊断：胰腺癌 。诊断依据：1、老年女，慢性起病，治疗史明确，病程较长。2、患者缘于2011年1月无明显诱因出现中上腹胀，进食后明显，无恶心、呕吐，皮肤巩膜逐渐黄染，全身瘙痒，伴有浓茶样小便，无发热、寒战。1月9日于我院急诊行腹部B超诊断为\"肝内外胆管扩张\"，1月10日收住我院，CT、MRCP、EUS均提示胰腺占位，考虑胰腺癌伴胆道系统扩张。FNA液基培养找到癌细胞。2011-1-20日行ERCP并置入一5cm、8.5F塑料支架和一7cm、10F的粒子支架，粒子共10颗。2011-03-06日、03-13日、03-20日、04-03日、04-10日、04-17日予泰欣生200mg静滴6次。3、查体：腹平坦，无腹壁静脉曲张，腹部柔软，无压痛、反跳痛，腹部无包块。肝脏肋下未触及，脾脏肋下未触及，Murphy氏征阴性，肝区有轻叩痛，肾区无叩击痛，无移动性浊音。肠鸣音未见异常，4次/分。鉴别诊断：１、胆总管肿瘤：患者可有慢性腹痛，黄疸伴肝功能损害，B超常提示胆总管扩张，与患者不符，可排除。2、慢性胰腺炎：可有腹痛、腹泻、血糖升高等临床表现，B超、CT等提示胰腺钙化、胰管结石、胰腺假性囊肿等影像学表现。可查CA199、超声内镜＋FNA等排除。诊疗计划： 1、按消化科护理常规，一级护理，低脂半流。2、完善相关检查。3、请示上级医师决定进一步诊治方案。胡良嗥/刘明浩2011-06-10 16:46　　　　　胡良嗥主治医师首次查房记录今日胡良嗥主治医师查房：补充的病史和体征：无特殊病史补充。今日患者病情平稳，一般情况可。主治医师查房后指出：主治医师48小时诊断：胰腺癌。诊断依据：1、老年女，慢性起病，治疗史明确，病程较长。2、患者缘于2011年1月无明显诱因出现中上腹胀，进食后明显，无恶心、呕吐，皮肤巩膜逐渐黄染，全身瘙痒，伴有浓茶样小便，无发热、寒战。1月9日于我院急诊行腹部B超诊断为\"肝内外胆管扩张\"，1月10日收住我院，CT、MRCP、EUS均提示胰腺占位，考虑胰腺癌伴胆道系统扩张。FNA液基培养找到癌细胞。2011-1-20日行ERCP并置入一5cm、8.5F塑料支架和一7cm、10F的粒子支架，粒子共10颗。2011-03-06日、03-13日、03-20日\04-03日、04-10日、04-17日予泰欣生200mg静滴6次。3、查体：腹平坦，无腹壁静脉曲张，腹部柔软，无压痛、反跳痛，腹部无包块。肝脏肋下未触及，脾脏肋下未触及，Murphy氏征阴性，肝区有轻叩痛，肾区无叩击痛，无移动性浊音。肠鸣音未见异常，4次/分。鉴别诊断：１、胆总管肿瘤：患者可有慢性腹痛，黄疸伴肝功能损害，B超常提示胆总管扩张，与患者不符，可排除。2、慢性胰腺炎：可有腹痛、腹泻、血糖升高等临床表现，B超、CT等提示胰腺钙化、胰管结石、胰腺假性囊肿等影像学表现。可查CA199、超声内镜＋FNA等排除。治疗计划： 1、按消化科护理常规，一级护理，低脂半流。2、完善胰腺CT及上消化道碘水造影等检查。孙畅2011-06-12 10:19　　　　　李兆申主诊医师首次查房记录今日李兆申教授查房后分析病情如下：补充的病史和体征：无特殊病史补充。今日患者病情平稳，一般情况可。CT：胰体癌并胰管扩张；肝左叶血管瘤可能大，肝右叶病灶考虑坏死；肝肾囊肿；胆囊结石，胆囊炎并肝内胆管积气扩张。诊断、病情、治疗方法分析讨论：患者胰腺癌诊断明确。注意事项：注意观察患者病情变化。孙畅2011-06-15 15:44　　　　　胡良嗥主治医师查房记录   今日胡良皞主治医师查房，患者未诉不适。今日患者病情平稳，一般情况可。查体情况:神清，心肺未见明显异常，腹平软，无压痛反跳痛。辅助检查结果：血总胆红素10.4umol/L、白蛋白30g/L、碱性磷酸酶312U/L、葡萄糖8.6mmol/L，胡良皞主治医师查房后指示：患者病情尚平稳，继续同前治疗。孙畅2011-06-18 08:55　　　　　李兆申主任医师查房记录　　今日李兆申主诊医师查房，患者述乏力。一般情况欠佳，精神一般，睡眠可，食欲减退，大小便无异常。查体情况:心肺未见异常，腹平软，无压痛反跳痛。辅助检查2011-6-16血常规：HCT36%，PLT90x10^9/L，李兆申主任医师查房后指示：患者体质虚弱，继续抗炎、营养支持等对症支持治疗，密切观察病情变化。孙畅2011-06-21 08:40　　　　　胡良嗥主治医师查房记录   今日胡良皞主治医师查房，患者乏力，一般情况欠佳，查体：神清，心肺未见明显异常，腹平软，无压痛反跳痛。胡良皞主治医师查房后指示：今日予以泰欣生治疗，继续营养支持，密切观察病情。孙畅2011-06-24 08:38　　　　　李兆申主任医师查房记录　　今日李兆申主诊医师查房，今日患者病情平稳，一般情况可。查体:神清，心肺未见明显异常，腹平软，无压痛反跳痛。李兆申主任医师查房后指示：患者病情平稳，继续营养支持治疗。孙畅2011-06-27 07:46　　　　　廖专主治医师查房记录   今日廖专主治医师查房，患者诉发热。今日患者病情平稳，一般情况可。查体情况:神清，心肺未见明显异常，腹平软，无压痛反跳痛。廖专主治医师查房后指示：患者今晨有发热，予以甲磺酸帕珠沙星、奥硝唑抗炎；吲哚美辛栓纳肛退热等对症支持治疗。孙畅2011-06-30 07:51　　　　　李兆申主诊医师查房记录　　今日李兆申主诊医师查房，患者未诉不适。今日患者病情平稳，一般情况可。查体情况:神清，心肺未见明显异常，腹平软，无压痛反跳痛。李兆申主任医师查房后指示：2011-06-28已予以泰欣生治疗，患者未诉不适，目前病情平稳，要求出院，予以同意。孙畅";
+        String medicalContent = "2016-03-11 10:20            　　首次病程记录  　胡维银，男，90岁，已婚，汉族，上海杨浦区人，家住上海市杨浦区嫩江路863号907室。因“双下肢静息痛2个月”门诊拟“下肢动脉硬化闭塞症”于2016-03-11收入我科。病例特点：1、老年男，慢性起病，治疗史明确，病程较长。2、患者于2个月前无明显诱因逐渐出现双下肢静息痛。无法下地行走，感双下肢发冷，无破溃、坏疽。其他疾病情况：高血压、糖尿病病史30余年。服药情况：阿司匹林肠溶片、硝苯地平控释片、依帕司他片、阿卡波糖片、瑞格列奈片、培元通脑胶囊、门冬胰岛素30注射液。3、查体：T 36.0℃，P 80bpm，R 20bpm，BP 138／80mmHg。双下肢无畸形，双足皮肤色泽发绀，双下肢皮温低。双侧足背动脉未触及，右侧胫后动脉弱，左侧胫后动脉未触及，双侧股动脉搏正常。双下肢感觉功能未见明显异常，活动可。双侧桡动脉、颈动脉搏动无明显异常。4、辅助检查：2016-3-1来我院就诊，门诊行双下肢彩超示1.双侧股动脉内膜增厚毛糙，伴多发斑块形成；2.双侧股动脉、腘动脉不全性闭塞，双侧股浅动脉闭塞。深静脉血栓评估：(1-2分)低危    　　　       根据上述病史特点：初步诊断：1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压诊断依据：下肢动脉硬化闭塞症（静息痛期）诊断依据：因双下肢静息痛2个月入院。查体双下肢缺血表现明显。糖尿病诊断依据：糖尿病病史30余年，胰岛素皮下注射控制血糖。高血压诊断依据：高血压病史30余年，长期服用降压药物控制血压。鉴别诊断：１、血栓闭塞性脉管炎（TAO）：多见于青壮年男性，病因尚未明确，常有吸烟及受凉史，病变多累及双侧下肢中小动脉，常伴有游走性浅静脉炎。患者为老年男性，病变动脉为主干，与血栓闭塞性脉管炎不符。 2、急性动脉栓塞：多急性起病且进展迅速。多源自于心脏源性栓子，患者多伴随有房颤，且未规律华发林化。行下肢动脉造影（ＣＴＡ、ＭＲＡ、ＤＳＡ）或彩超可明确。诊疗计划：１.检查安排：完善三大常规、肝肾功能、凝血、下肢动脉CTA，心脏彩超、心电图及胸片等检查。２.治疗计划：继续控制血压、血糖，排除手术禁忌，择期行双下肢PTA+支架成形术。本病例按照临床路径计划实施：是３.预期的治疗结果：缓解病程进程、减轻病人痛苦 ４.预计住院时间：7天。５.预计治疗费用：70000元（以实际发生费用为准）。袁良喜/李强2016-03-12 08:08　　　　　袁良喜主治医师首次查房记录    今日袁良喜主治医师查房：补充的病史和体征：无。今日患者一般情况可，生命体征：体温36.5℃，脉搏76次／分，呼吸18次／分，血压142／80mmHg，神志清，精神可，睡眠可，饮食可，大小便正常。主治医师查房后指出：主治医师48小时诊断：1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。诊断依据：　　下肢动脉硬化闭塞症（静息痛期） 诊断依据：下肢缺血症状明显，双下肢皮温低，足背动脉搏动未及。　　糖尿病诊断依据：病史30余年，皮下注射胰岛素及口服降糖药物治疗。　　  高血压诊断依据：病史30余年，口服降压药控制血压。鉴别诊断：1、急性动脉栓塞：多急性起病且进展迅速。多源自于心脏源性栓子，患者多伴随有房颤，且未规律华发林化。行下肢动脉造影（ＣＴＡ、ＭＲＡ、ＤＳＡ）或彩超可明确。   2、腰椎间盘突出症、椎管狭窄等：也可表现为行走后下肢疼痛，多由弯腰等活动所致，行走距离可变，下肢动脉搏动可触及，与本例不符。治疗计划：完善必要的辅助检查，排除手术禁忌，择期行下肢PTA备支架成形术。袁良喜/李强2016-03-13 08:59　　　　　包俊敏主诊医师首次查房记录   今日包俊敏主诊医师查房后分析病情如下：补充的病史和体征：无。查体：双下肢无畸形，双足皮肤色泽发绀，双下肢皮温低。双侧足背动脉未触及，右侧胫后动脉弱，左侧胫后动脉未触及，双侧股动脉搏正常。双下肢感觉功能未见明显异常，活动可。双侧桡动脉、颈动脉搏动无明显异常。颈动脉、椎动脉彩超示右侧颈内动脉闭塞。今日患者一般情况可，生命体征：体温36℃，脉搏80次／分，呼吸18次／分，血压110／70mmHg，神志清，精神可，睡眠可，饮食可，大小便正常。诊断、病情、治疗方法分析讨论：患者目前诊断为1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。合并有右侧颈内动脉闭塞，有手术指征，向家属讲明，择期予以手术。注意事项：待双下肢CTA结果，择期手术。袁良喜/李强2016-03-15 11:11　　　　　术前小结简要病情：患者胡维银，男，90岁，已婚，汉族，上海杨浦区人。因“双下肢静息痛2个月”门诊拟“下肢动脉硬化闭塞症”于2016-03-11收入我科。查体：双下肢无畸形，双足皮肤色泽发绀，双下肢皮温低。双侧足背动脉未触及，右侧胫后动脉弱，左侧胫后动脉未触及，双侧股动脉搏正常。双下肢感觉功能未见明显异常，活动可。双侧桡动脉、颈动脉搏动无明显异常。辅助检查2016-3-1来我院就诊，门诊行双下肢彩超示1.双侧股动脉内膜增厚毛糙，伴多发斑块形成；2.双侧股动脉、腘动脉不全性闭塞，双侧股浅动脉闭塞。根据以上病史、查体及辅助检查结果，可初步诊断为1.下肢动脉硬化闭塞症（静息痛期）2.糖尿病3.高血压。经与家属谈话并签字同意定于2016年03月16日在局麻下行下肢动脉造影备PTA支架成形备置管溶栓术治疗。术前术者查看患者及病情评估：包俊敏主诊医师术前查看患者，目前诊断明确，血糖、血压控制可，双下肢缺血症状明显，影像提示右下肢长段股浅动脉闭塞，膝下动脉未显影，左下肢胫后动脉显影，拟于明日先行在局麻下行右下肢动脉造影+PTA支架成形术；左下肢缺血症状可行限期手术治疗。术前诊断：1.下肢动脉硬化闭塞症（静息痛期）2.糖尿病3.高血压。手术指征：双下肢缺血症状明显，影像证实下肢动脉硬化闭塞症。手术禁忌症:无。拟施手术名称和手术方式：右下肢动脉造影+PTA支架成形术。手术时间：2016年03月16日拟施麻醉方式：局麻注意事项：１、术前完善检查，做好术前评估；２、术中操作细致轻柔，避免副损伤；３、术后加强护理，注意穿刺点有无出血。袁良喜/董健2016-03-15 16:16　　　　　术前讨论讨论日期：2016年03月15日参加讨论人员：包俊敏主任医师、袁良喜主治医师、董健住院医师、李强进修医师、李海燕护士长或责任护士及相关科室人员主持人：包俊敏主诊医师讨论内容：　　李强进修医师：病史汇报详见入院记录。患者因双下肢静息痛2个月入院。根据病史、查体及辅助检查结果初步诊断为1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。术前准备已完善。经与家属谈话并签字同意定于2016年03月16日在全麻下行右下肢动脉造影+PTA支架成形术治疗。    袁良喜主治医师：患者术前诊断1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。手术指征双下肢缺血症状明显，影像证实下肢动脉硬化闭塞症。手术禁忌症无。拟实施右下肢动脉造影+PTA支架成形术，拟实施局部麻醉。手术可能存在的风险术中使用造影剂致过敏及急性肾功能衰竭等，严重者可危及生命。术中损伤血管、神经，术中动脉破裂出血，失血性休克，术后假性动脉瘤形成，术后穿刺点出血。防范措施：术中仔细操作，术后注意应用抗凝药物，监测生命体征，观察出血点情况。    李海燕护士长（或责任护士）：术后严密观察，注意有无穿刺点出血及患肢血运情况。    包俊敏主任医师总结：患者目前诊断下肢动脉硬化闭塞症（静息痛期）诊断明确，合并高血压、糖尿病，目前下肢缺血症状明显，静息痛严重，需止痛药物治疗，经讨论拟行右下肢动脉造影+PTA支架成形术。术前完善检查，；术中操作仔细，选择合适球囊、支架；术后予以抗凝、抗血小板、扩张血管治疗。袁良喜/李强2016-03-16 16:40　　　　　术后首次病程记录    患者今日在局麻下行下肢动脉造影PTA支架成形术。术中诊断1.下肢动脉硬化闭塞症（静息痛期）2.糖尿病3.高血压。手术经过如下：穿刺后造影提示左肾动脉稍狭窄，右肾动脉通畅、管径正常，腹主动脉、双侧髂动脉通畅，管径正常、股总动脉通畅，股深动脉通畅，侧枝发达，股浅动脉自开口处以下至中段均不显影，股浅动脉下段及腘动脉由侧枝供血，局限性狭窄，但血流通畅；腓动脉多发狭窄，胫前动脉通畅，但中段有一小动静脉瘘。导管配合导丝，尝试开通股浅动脉闭塞段未成功。遂消毒腘窝，逆行穿刺腘动脉。导丝成功通过股浅动脉闭塞段。在股动脉入路导管配合下，导丝头端通过导管引出体外。退出导管，自股动脉沿导丝送入5mm*22cm球囊于股浅动脉，对股浅动脉闭塞段进行扩张。然后退出腘动脉处鞘管，沿股动脉送入4*120mm球囊对腘动脉进行扩张5min，并进行加压包扎。然后先后送入5*150mm和6*170mm支架于腘动脉和股浅动脉闭塞段，透视下精确定位后成功释放。经后扩后再次造影显示股浅动脉、腘动脉全段通畅，血流迅速，支架形态良好，位置恰当，腘动脉周围无造影剂渗出。术后予抗凝止痛扩血管等治疗。    术后深静脉血栓评估：(3-4分)中危袁良喜2016-03-17 10:40　　　　　术后第一天记录    术后第1天，患者生命体征：体温37.0℃，脉搏70次／分，呼吸19次／分，血压130／75mmHg，患者一般情况良好，神志清，精神可，睡眠可，饮食可，大小便正常，查体情况穿刺点无渗出，患肢皮温较前温暖。袁良喜主治医师查房指示：患者术后一般情况可，生命体征平稳，继续当前治疗方案，注意观察患肢血供。袁良喜/董健2016-03-18 08:57　　　　　术后第二天记录    术后第2天，患者生命体征：体温37.3℃，脉搏72次／分，呼吸18次／分，血压146／80mmHg，患者一般情况良好，神志清，精神可，睡眠可，饮食可，大小便正常，查体情况心肺未及异常，右下肢股动脉及腘动脉穿刺点无渗出，小腿轻度肿胀，患肢皮温较前温暖。袁良喜主治医师查房指示：患者术后恢复可，已停用丹参、疏血通，加用西洛他唑片(100.0000mg);2/日;口服，继续观察患肢血运。袁良喜/李强2016-03-19 15:43　　　　　术后第三天记录术后第3天，患者生命体征：体温36.7℃，脉搏70次／分，呼吸19次／分，血压130／75mmHg，患者一般情况良好，神志清，精神可，睡眠可，饮食可，大小便正常，查体情况同前。辅助检查2016-3-19 12:44:47  血  钠139mmol/L、钾4.4mmol/L、氯103mmol/L、肌酐136umol/L2016-3-19 12:21:28  血  白细胞计数12.33x10^9/L、中性粒细胞计数10.66x10^9/L、红细胞计数3.98x10^12/L、血小板计数158x10^9/L、血红蛋白118g/L。包俊敏主诊医师查房指示：术后一般情况可，生命体征平稳，继续当前治疗方案，注意观察患者生命体征变化。袁良喜2016-03-21 11:07　　　　　袁良喜主治医师查房记录    今日袁良喜主治医师查房，患者主诉:无。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：体温36.5℃，脉搏70次／分，呼吸18次／分，血压130/70mmHg。查体情况:患肢皮温暖，腓肠肌轻压痛，穿刺点无渗出。辅助检查结果：2016-3-21 7:04:53  血  白细胞计数8.10x10^9/L、中性粒细胞计数6.58x10^9/L、红细胞计数3.49x10^12/L、血小板计数186x10^9/L、血红蛋白103g/L；2016-3-20 12:11:27  血  血清降钙素原0.436ng/ml。袁良喜主治医师查房后指示：患者术后一般情况可，生命体征平稳，下肢血供改善明显，明日可出院，出院后3个月门诊复诊。袁良喜";
         //medicalContent = processMedicalContent(medicalContent);
         System.out.println(medicalContent);
         //System.out.println(sb.toString());

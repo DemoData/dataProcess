@@ -1,5 +1,18 @@
 package com.example.demo.util;
 
+import com.example.demo.constant.CommonConstant;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.*;
+import java.math.BigInteger;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,22 +23,123 @@ public class PatternUtil {
     public static Pattern EMPTY_PATTERN = Pattern.compile("\\s*|\t|\r|\n");
     public static Pattern DATE_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     public static Pattern ANCHOR_PATTERN = Pattern.compile("【【([\\s\\S]+?)】】");
+    public static Pattern HTML_PATTERN = Pattern.compile("<([\\s\\S]+?)>");
+    public static Pattern CHINESE_PATTERN = Pattern.compile("[\u4e00-\u9fa5]+");
+    public static Pattern STANDARD_ANCHOR_PATTERN = Pattern.compile("^([\u4e00-\u9fa5]+)：$");
+    public static Pattern STANDARD_ANCHOR_WITH_SYMBOL_PATTERN = Pattern.compile("^【【[\u4e00-\u9fa5]+】】：$");
+    public static Pattern DIGEST_PATTERN = Pattern.compile("\\d");
+    public static Pattern SECTION_PATTERN = Pattern.compile("<section ([\\s\\S]+?)([\u4e00-\u9fa5]+)([\\s\\S]+?)>");
+    public static Pattern FIELDELEM_PATTERN = Pattern.compile("(<fieldelem [\\s\\S]+?)([\u4e00-\u9fa5]+)([\\s\\S]+?>)([\\s\\S]+)<");
 
     public static Long medicalContentSplitPatternToInt(String str){
         return Long.valueOf(str.replaceAll("-", "").replaceAll(":", "").replaceAll(" ", ""));
     }
 
-    public static void main(String[] args) {
 
-        String test = "　　首次病程记录吴绍良，男，70岁，已婚，汉族，江苏苏州市人，家住江苏省张家港市塘桥镇滩里村第二十五组98号。因“上腹部疼痛10天”门诊拟“胰腺占位”于2016-09-13收入我科。病例特点：1、老年男，慢性起病，治疗史明确，病程较长。2、患者于10天前无明显诱因出现上腹部隐痛，可放射至肩部，无腹胀、发热、恶心、呕吐，偶有胸闷、气喘、咳痰，无腹泻、黑便等,于2016-09-04至张家港第三人民医院住院治疗，入院后查胸部平扫+三维重建示：1.胰头部占位性病变，恶性不能完全排除，建议进一步检查2.胃窦部胃壁增厚，请结合临床，建议必要时胃镜检查3.左肾未见明显显示，请结合临床；右肾代偿性增大；右肾多发小囊肿4.两侧肾上腺区显示欠清，建议复查5.前列腺钙化6.两肺野改变，结合病史，考虑慢性支气管影、肺气肿；左肺多发肺大泡7.气管内多发小斑片状高密度影，考虑粘液团，建议复查8.左侧多发肋骨陈旧性骨折9.右侧肺尖部胸膜增厚。3、查体：T36.0℃，P80bpm，R20bpm，BP110／70mmHg。腹平坦，无腹壁静脉曲张，腹部柔软，无压痛、反跳痛，腹部无包块。肝脏肋下未触及，脾脏肋下未触及，Murphy氏征阴性，肾区无叩击痛，无移动性浊音。肠鸣音未见异常，4次/分.4、辅助检查：张家港第三人民医院查胸部平扫+三维重建示(2016-09-04)：1.胰头部占位性病变，恶性不能完全排除，建议进一步检查2.胃窦部胃壁增厚，请结合临床，建议必要时胃镜检查3.左肾未见明显显示，请结合临床；右肾代偿性增大；右肾多发小囊肿4.两侧肾上腺区显示欠清，建议复查5.前列腺钙化6.两肺野改变，结合病史，考虑慢性支气管影、肺气肿；左肺多发肺大泡7.气管内多发小斑片状高密度影，考虑粘液团，建议复查8.左侧多发肋骨陈旧性骨折9.右侧肺尖部胸膜增厚。根据上述病史特点：初步诊断：1.胰腺占位胰腺癌？2.2型糖尿病3.肺气肿4.右肾多发囊肿。诊断依据：1.患者,男,70岁,已婚,因“上腹部疼痛10天”门诊拟“胰腺占位”收入院,2查体:腹部柔软，无压痛、反跳痛，腹部无包块.3.辅助检查:张家港第三人民医院查胸部平扫+三维重建示(2016-09-04)：1.胰头部占位性病变，恶性不能完全排除，建议进一步检查;糖尿病史2年,平时自服药物治疗,血糖控制可,肺气肿病史2年.鉴别诊断：１、胆总管肿瘤：患者可有慢性腹痛，黄疸伴肝功能损害，B超常提示胆总管扩张，与患者不符，可排除。2、慢性胰腺炎：可有腹痛、腹泻、血糖升高等临床表现，B超、CT等提示胰腺钙化、胰管结石、胰腺假性囊肿等影像学表现。可查CA199、超声内镜＋FNA等排除。2.自身免疫性胰腺炎：慢性胰腺炎的一种特殊类型，影像学表现为胰腺弥漫或局灶性肿大，IG4升高或自身抗体阳性，可并发其他自身免疫性疾病或累积其他器官，皮质激素治疗有效，胰腺穿刺可进一步鉴别。诊疗计划：１.检查安排：完善入院相关检查，如血尿粪三大常规，肝肾功能，血凝等２.治疗计划：待入院检查汇报后，拟定进一步治疗方案本病例按照临床路径计划实施：否３.预期的治疗结果：获得病理学诊断４.预计住院时间：5天。５.预计治疗费用：以实际发生费用为准。安薇/李传";
-        System.out.println(test.replaceAll(" ", ""));
-        System.out.println();
-        System.out.println(EMPTY_PATTERN.matcher("　　首次病程记录吴绍良，男，70岁，已婚，汉族，江苏苏州市人，家住江苏省张家港市塘桥镇滩里村第二十五组98号。因“上腹部疼痛10天”门诊拟“胰腺占位”于2016-09-13收入我科。病例特点：1、老年男，慢性起病，治疗史明确，病程较长。2、患者于10天前无明显诱因出现上腹部隐痛，可放射至肩部，无腹胀、发热、恶心、呕吐，偶有胸闷、气喘、咳痰，无腹泻、黑便等,于2016-09-04至张家港第三人民医院住院治疗，入院后查胸部平扫+三维重建示：1.胰头部占位性病变，恶性不能完全排除，建议进一步检查2.胃窦部胃壁增厚，请结合临床，建议必要时胃镜检查3.左肾未见明显显示，请结合临床；右肾代偿性增大；右肾多发小囊肿4.两侧肾上腺区显示欠清，建议复查5.前列腺钙化6.两肺野改变，结合病史，考虑慢性支气管影、肺气肿；左肺多发肺大泡7.气管内多发小斑片状高密度影，考虑粘液团，建议复查8.左侧多发肋骨陈旧性骨折9.右侧肺尖部胸膜增厚。3、查体：T36.0℃，P80bpm，R20bpm，BP110／70mmHg。腹平坦，无腹壁静脉曲张，腹部柔软，无压痛、反跳痛，腹部无包块。肝脏肋下未触及，脾脏肋下未触及，Murphy氏征阴性，肾区无叩击痛，无移动性浊音。肠鸣音未见异常，4次/分.4、辅助检查：张家港第三人民医院查胸部平扫+三维重建示(2016-09-04)：1.胰头部占位性病变，恶性不能完全排除，建议进一步检查2.胃窦部胃壁增厚，请结合临床，建议必要时胃镜检查3.左肾未见明显显示，请结合临床；右肾代偿性增大；右肾多发小囊肿4.两侧肾上腺区显示欠清，建议复查5.前列腺钙化6.两肺野改变，结合病史，考虑慢性支气管影、肺气肿；左肺多发肺大泡7.气管内多发小斑片状高密度影，考虑粘液团，建议复查8.左侧多发肋骨陈旧性骨折9.右侧肺尖部胸膜增厚。根据上述病史特点：初步诊断：1.胰腺占位胰腺癌？2.2型糖尿病3.肺气肿4.右肾多发囊肿。诊断依据：1.患者,男,70岁,已婚,因“上腹部疼痛10天”门诊拟“胰腺占位”收入院,2查体:腹部柔软，无压痛、反跳痛，腹部无包块.3.辅助检查:张家港第三人民医院查胸部平扫+三维重建示(2016-09-04)：1.胰头部占位性病变，恶性不能完全排除，建议进一步检查;糖尿病史2年,平时自服药物治疗,血糖控制可,肺气肿病史2年.鉴别诊断：１、胆总管肿瘤：患者可有慢性腹痛，黄疸伴肝功能损害，B超常提示胆总管扩张，与患者不符，可排除。2、慢性胰腺炎：可有腹痛、腹泻、血糖升高等临床表现，B超、CT等提示胰腺钙化、胰管结石、胰腺假性囊肿等影像学表现。可查CA199、超声内镜＋FNA等排除。2.自身免疫性胰腺炎：慢性胰腺炎的一种特殊类型，影像学表现为胰腺弥漫或局灶性肿大，IG4升高或自身抗体阳性，可并发其他自身免疫性疾病或累积其他器官，皮质激素治疗有效，胰腺穿刺可进一步鉴别。诊疗计划：１.检查安排：完善入院相关检查，如血尿粪三大常规，肝肾功能，血凝等２.治疗计划：待入院检查汇报后，拟定进一步治疗方案本病例按照临床路径计划实施：否３.预期的治疗结果：获得病理学诊断４.预计住院时间：5天。５.预计治疗费用：以实际发生费用为准。安薇/李传").matches());
-        test = "入院记录【【姓名】】：宋如发【【性别】】：男【【年龄】】：71岁【【民族】】：汉族【【籍贯】】：上海县【【婚姻】】：已婚【【职业】】：退休【【供史者】】：患者本人【【现居住地址】】：上海市浦东新区高桥镇仓房村张家宅1号【【入院时间】】：2017-08-2513:4【【记录时间】】：2017-08-2516:23患者联系方式：患者女儿13818075213。【【主诉】】：检查发现胰腺占位2周。【【现病史】】：患者于2周前体检B超发现胰腺占位，不伴腹痛、腹胀、腹泻、腰背部疼痛、全身皮肤及巩膜黄染、皮肤瘙痒、大便白陶土色、小便黄、消瘦、发热、恶心呕吐，今为进一步治疗来我院就诊，门诊以\"胰头囊性占位：胰头动脉瘤并血栓形成，高血压病（高危组）\"收入院，自发病以来，病人精神状态良好，体力情况良好，食欲食量良好，睡眠情况良好，体重无明显变化，大便正常，小便正常。仍需治疗的其他疾病情况：高血压。入院前仍在服用的治疗药物：厄贝沙坦、氨氯地平。【【既往史】】：既往健康状况良好，否认肝炎病史，否认结核病史，高血压病史级别：三级，危险程度：高危，病程：10年，目前治疗方法：厄贝沙坦、氨氯地平，目前疾病状况：控制良好，心脏疾病病史类型先天性心脏病，病程：60年，目前治疗方法：60年前行心脏手术，具体不详，目前疾病状况：治愈，否认脑血管疾病病史，否认糖尿病病史，否认胰腺炎病史，否认胰腺肿瘤病史，否认腹部手术史，其他部位手术史手术原因：先天性心脏病，手术【【时间】】：60年前，手术方式：心脏手术，具体不详，术后恢复情况：良好，目前疾病情况：痊愈，否认外伤史，否认【【输血史】】，否认食物过敏史，否认药物过敏史，预防接种史不详。【【个人史】】：生于上海县，久居本地，否认疫源接触史，否认粉尘接触史，否认有毒化学物品接触史，否认放射性物质接触史，否认吸烟史，否认嗜酒史，否认药物史，否认冶游史。【【婚育史】】：已婚，配偶健康状况良好，子女健康状况良好。【【家族史】】：父亲已故，原因：不明，母亲已故，原因：胃癌，兄弟姐妹身体情况：健在，否认家族性遗传病史，否认家族性传染病史，否认家族性胰腺癌病史，否认家族性胰腺炎病史，否认家族性糖尿病病史，否认家族性其他肿瘤疾病病史。【【体格检查】】T：36.0℃P：80次/分R：18次/分BP：120/80mmHg。发育正常，营养良好，正常面容，表情自如，自动体位，神志清楚，精神状态良好，查体合作。全身正常，无皮疹、皮下出血，无皮下结节、瘢痕，毛发分布正常，皮下无水肿，无肝掌、蜘蛛痣。全身浅表淋巴结无肿大。头颅无畸形、压痛、包块、无眼睑水肿，结膜未见异常，眼球运动未见异常，巩膜无黄染，角膜透明，双侧瞳孔等大同圆，直径约3mm，对光反射灵敏，外耳道无异常分泌物，乳突区无压痛。外鼻无畸形，鼻通气畅，鼻翼无扇动，两侧副鼻窦区无压痛。口唇无发绀，口腔粘膜未见异常。舌苔未见异常，伸舌无偏斜、震颤，齿龈未见异常，咽部粘膜未见异常，扁桃体无肿大。颈软无抵抗，气管居中，颈动脉搏动未见异常，颈静脉无怒张，肝颈静脉回流征阴性，甲状腺无肿大，无压痛、震颤、血管杂音。胸廓未见异常，胸骨无压痛，乳房正常对称。呼吸运动未见异常，肋间隙未见异常，语颤未见异常。叩诊清音，呼吸规整，双肺呼吸音清晰，双侧肺未闻及干、湿性罗音，无胸膜摩擦音。心前区无隆起，心尖搏动未见异常，心浊音界未见异常，心率80次/分，律齐，各瓣膜听诊区未闻及病理性杂音，无心包摩擦音。腹部检查详见【【专科情况】】。脊柱正常生理弯曲，四肢活动自如，无畸形、下肢静脉曲张、杵状指（趾），关节未见异常，双下肢无浮肿。四肢肌力、肌张力未见异常，双侧肱二、三头肌腱反射未见异常，双侧膝、跟腱反射未见异常，双侧Babinski征阴性。　【【专科情况】】：睑结膜未见苍白，巩膜未见黄染，无腹部手术切口瘢痕，腹平坦，无腹壁静脉曲张，腹部柔软，腹部无压痛，腹部无反跳痛，腹部未扪及包块，肝脏肋下未触及，脾脏肋下未触及，Murphy氏征阴性，肾区叩击痛阴性，移动性浊音阴性，肠鸣音无异常，4次/分，直肠指诊未做。　【【辅助检查】】（MRI2822422，2017-8-17，长海医院）：胰头区域动脉瘤伴血栓，与肠系膜上动脉分支相通，腹腔系膜干形成，建议肠系膜上动脉CTA检查；肝脏小囊肿；双肾多发囊肿。深静脉血栓评估：(1-2分)低危BMI指数：25.9。NRS2002评分：1分。　　营养会诊：不需要。　　康复会诊：不需要。【【最后诊断】】：(2017-08-27)1.胰头占位：血管瘤？2.高血压3级（很高危）王斐【【初步诊断】】：(2017-08-25)1.胰头占位：血管瘤？2.高血压3级（很高危）王斐/樊昊";
-        Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(test);
-        while(matcher.find()){
-            System.out.println(matcher.group(1));
+    public static String getMd5ByFile(File file) throws FileNotFoundException {
+        String value = null;
+        FileInputStream in = new FileInputStream(file);
+        try {
+            MappedByteBuffer byteBuffer = in.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(byteBuffer);
+            BigInteger bi = new BigInteger(1, md5.digest());
+            value = bi.toString(16);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if(null != in) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+        return value;
     }
+
+    public static void main(String[] args) {
+        try{
+            System.out.println(STANDARD_ANCHOR_PATTERN.matcher("治疗经过：").find());
+            int exsitFileCount = 0;
+            Map<String, Integer> result = new HashMap<>();
+            String chongming = "/Users/liulun/Desktop/上海长海医院/血管外科/重名";
+            File chongmingFile = new File(chongming);
+            if(!chongmingFile.exists()){
+                chongmingFile.mkdir();
+            }
+            List<File> fileList = FileUtil.listAllFile("/Users/liulun/Desktop/上海长海医院/血管外科/血管外科下肢动脉相关_20180210_1");
+            for(int i = 0; i < fileList.size(); i++){
+                if(fileList.get(i).length() == 0){
+                    System.out.println("内容为空:" + fileList.get(i).getAbsolutePath());
+                    continue;
+                }
+                String fileName = fileList.get(i).getName();
+                Matcher matcher = PatternUtil.CHINESE_PATTERN.matcher(fileName);
+                if(matcher.find()){
+                    String type = matcher.group();
+                    if(!result.containsKey(type)){
+                        result.put(type, 0);
+                    }
+                    File file = new File("/Users/liulun/Desktop/上海长海医院/血管外科/" + type);
+                    if(!file.exists()){
+                        file.mkdir();
+                    }
+                    File newFile = new File("/Users/liulun/Desktop/上海长海医院/血管外科/" + type + "/" + fileName);
+                    if(!newFile.exists()){
+                        //newFile.createNewFile();
+                    }else{
+                        String newFileMD5 = getMd5ByFile(newFile);
+                        String originalMD5 = getMd5ByFile(fileList.get(i));
+                        if(newFileMD5.equals(originalMD5)){
+                            continue;
+                        }
+                        int order = 1;
+                        newFile = new File(chongming + "/" + fileName.substring(0, fileName.lastIndexOf("."))+ "_" + order + ".xml");
+                        while(newFile.exists()){
+                            order++;
+                            newFile = new File(chongming + "/" + fileName.substring(0, fileName.lastIndexOf("."))+ "_" + order + ".xml");
+                        }
+                        //System.out.println(fileName);
+                        //System.out.println(fileName);
+                        exsitFileCount++;
+                    }
+                    Files.copy(fileList.get(i).toPath(), newFile.toPath());
+                    result.put(type, result.get(type) + 1);
+                }
+                /**String txtFileName = fileName.substring(0, fileName.lastIndexOf(".")) + ".txt";
+                File txtFile = new File("/Users/liulun/Desktop/上海长海医院/血管外科/txt/" + txtFileName);
+                if(!txtFile.exists()){
+                    txtFile.createNewFile();
+                }
+                BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(txtFile));
+                InputStreamReader isr = new InputStreamReader(new FileInputStream(fileList.get(i)), "GBK");
+                BufferedReader bufferedReader = new BufferedReader(isr);
+                String line;
+                while((line = bufferedReader.readLine()) != null){
+                    line = StringUtil.trim(line.replaceAll("<([\\s\\S]+?)>", ""));
+                    if(!"".equals(line)) {
+                        bufferedWriter.write(line + "\n");
+                    }
+                }
+                bufferedWriter.flush();
+                bufferedWriter.close();
+                bufferedReader.close();**/
+            }
+            System.out.println("同名文件:" + exsitFileCount);
+            int sum = 0;
+            for(String key : result.keySet()){
+                sum += result.get(key);
+                File file = new File("/Users/liulun/Desktop/上海长海医院/血管外科/" + key);
+                System.out.println(key + " " + result.get(key)  + " " +  file.listFiles().length);
+            }
+            System.out.println("总文件：" + sum);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
 
 }

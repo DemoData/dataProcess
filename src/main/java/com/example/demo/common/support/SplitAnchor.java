@@ -13,15 +13,15 @@ public class SplitAnchor {
     //不需要检查后面是否需要冒号的锚点
     private static List<String> notNeed = new ArrayList<>();
     static {
-        notNeed.add("主诉");
-        notNeed.add("电话");
-        notNeed.add("住址");
-        notNeed.add("民族");
-        notNeed.add("婚否");
-        notNeed.add("职业");
-        notNeed.add("姓名");
-        notNeed.add("性别");
-        notNeed.add("年龄");
+        //notNeed.add("主诉");
+        //notNeed.add("电话");
+        //notNeed.add("住址");
+        //notNeed.add("民族");
+        //notNeed.add("婚否");
+        //notNeed.add("职业");
+
+        //notNeed.add("性别");
+        //notNeed.add("年龄");
     }
     private static List<String> need = new ArrayList<>();
     static {
@@ -32,6 +32,31 @@ public class SplitAnchor {
         need.add("出院带药");
         need.add("过敏史");
         need.add("专科检查");
+        need.add("输血史");
+        //need.add("体格检查");
+        need.add("入院后完善相关检查");
+        need.add("诊断");
+        need.add("上级医师");
+        need.add("主任医师");
+        need.add("出院计划");
+        need.add("自动出院");
+        need.add("辅助检查");
+        need.add("门诊诊断");
+        need.add("治疗情况");
+        need.add("手术日期");
+        need.add("手术名称");
+        need.add("主治医师");
+        need.add("出院用药");
+        need.add("姓名");
+        need.add("性别");
+        need.add("年龄");
+        need.add("职业");
+        need.add("婚姻");
+        need.add("主诉");
+        need.add("主  诉");
+        need.add("民族");
+        need.add("建议");
+        need.add("病理结果");
         //need.add("现病史");
     }
 
@@ -39,7 +64,7 @@ public class SplitAnchor {
     static {
         forbid.add("晨僵");
     }
-    private ArrayList<String> anchors;
+    private List<String> anchors;
 
     private ArrayList<AnchorInfo> anchorInfos = new ArrayList<AnchorInfo>(){
         @Override
@@ -78,7 +103,7 @@ public class SplitAnchor {
 
     protected Pattern[] candidatesPatterns = new Pattern[anchorCandicatePatterns.length];
 
-    public SplitAnchor(LineItem preLine, LineItem line, LineItem nextLine, ArrayList<String> anchors) {
+    public SplitAnchor(LineItem preLine, LineItem line, LineItem nextLine, List<String> anchors) {
         this.preLine = preLine;
         this.line = line;
         this.nextLine = nextLine;
@@ -93,7 +118,7 @@ public class SplitAnchor {
      * 发现候选锚点, 即推荐锚点
      */
     public void findAnchorCandidates(){
-        try {
+        /*try {
             for (int i = 0; i < candidatesPatterns.length; i++) {
                 Matcher matcher = candidatesPatterns[i].matcher(line.line);
                 boolean found = matcher.find();
@@ -125,7 +150,7 @@ public class SplitAnchor {
             }
         } catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
     }
 
     /**
@@ -137,6 +162,7 @@ public class SplitAnchor {
 //        }
         //匹配
         for (int i = 0; i <= anchors.size(); i++) {
+
             String anchor = null;
             boolean isStandardAnchor = false;
             if (i == anchors.size()){
@@ -152,17 +178,36 @@ public class SplitAnchor {
                 anchor = anchors.get(i);
                 isStandardAnchor = true;
             }
+            if("建议".equals(anchors.get(i)) && !line.line.contains("出院诊断")){
+                continue;
+            }
             int lastIndex = 0;
             while (line.line.indexOf(anchor, lastIndex) >= 0){
-                if(!notNeed.contains(anchor)){
-                    isStandardAnchor = false;
-                }
-                if (anchor.length() <= 2 && !isStandardAnchor || need.contains(anchor)){
-                    //2个字内的锚点必须后续有冒号
-                    if (!(line.line.length() > line.line.indexOf(anchor) + anchor.length() && (line.line.charAt(line.line.indexOf(anchor) + anchor.length()) == '：'
-                            || line.line.charAt(line.line.indexOf(anchor) + anchor.length()) == '】' || line.line.charAt(line.line.indexOf(anchor) + anchor.length()) == ':'
-                    ))){
-                        break;
+                int index = line.line.indexOf(anchor, lastIndex);
+                if(line.line.indexOf(anchor, lastIndex) != 0 && (line.line.charAt(index - 1) == '。') && !need.contains(anchor)){
+
+                }else{
+                    if(!notNeed.contains(anchor)){
+                        isStandardAnchor = false;
+                    }
+                    if (anchor.length() <= 2 && !isStandardAnchor || need.contains(anchor)){
+                        //2个字内的锚点必须后续有冒号
+                        if (!(line.line.length() > index + anchor.length() && (line.line.charAt(index + anchor.length()) == '：'
+                                || line.line.charAt(index + anchor.length()) == '】' || line.line.charAt(index + anchor.length()) == ':'
+                        ))){
+                            lastIndex = line.line.indexOf(anchor, lastIndex) + 1;
+                            continue;
+                        }
+                    }
+                    if(line.line.indexOf(anchor, lastIndex) != 0 && (line.line.charAt(index - 1) == '、' || line.line.charAt(index  - 1) == '：'
+                            || line.line.charAt(index  - 1) == '见' || line.line.charAt(index - 1) == '.')){
+                        lastIndex = line.line.indexOf(anchor, lastIndex) + 1;
+                        continue;
+                    }
+                    if ((line.line.indexOf(anchor, lastIndex) != 0 && isChinese(line.line.charAt(index - 1)))
+                            && (line.line.length() > index + anchor.length() && isChinese(line.line.charAt(index + anchor.length())))) {
+                        lastIndex = line.line.indexOf(anchor, lastIndex) + 1;
+                        continue;
                     }
                 }
                 AnchorInfo anchorInfo = new AnchorInfo(line.line.indexOf(anchor, lastIndex), line.line.indexOf(anchor, lastIndex)+anchor.length()-1, anchor);
@@ -188,6 +233,10 @@ public class SplitAnchor {
         }
 
         line.setAnchorInfos(anchorInfos);
+    }
+
+    public static boolean isChinese(char c) {
+        return c >= 0x4E00 &&  c <= 0x9FA5;// 根据字节码判断
     }
 
     public static void main(String[] args) {

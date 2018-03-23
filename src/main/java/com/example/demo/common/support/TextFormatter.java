@@ -1,6 +1,7 @@
 package com.example.demo.common.support;
 
 import com.alibaba.fastjson.JSONArray;
+import com.example.demo.util.StringUtil;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -27,8 +28,16 @@ public class TextFormatter {
     public final static String COLUMN_NAME = "columnName";
     public final static String TEXT = "text";
     public final static String TEXT_ARS = "textARS";
-    public final static String ANCHOR_EXCEL_PATH = "/data/hitales/SHCHRK/技术用-症状&体征-锚点使用.xlsx";
+    public final static String ANCHOR_EXCEL_PATH = "/Users/liulun/Desktop/上海长海医院/技术用-症状&体征-锚点使用.xlsx";
 
+
+    public static void main(String[] args) {
+
+        String test = ("病史为体检入院。一般可，食欲睡眠正常，大小便正常，近期体重无变化。既往史：发作性胸闷、气促2周，外院胸部CT等检查未发现明显异常。体格检查体温：36.0℃，脉搏：70次/分，呼吸：18次/分，血压：128/70mmHg，体重55kg　　　　　　　　　　体检计划拟安排检查项目：血常规、肝功、肾功电解质、血脂、糖化血红蛋白、三抗、丙肝、梅毒、HIV抗体、AFP、SCC鳞癌相关抗原、CA242、CEA、CA199、NSE、甲状腺功能、心肌损伤标志物、B型钠尿肽（BNP）、吸入性及食物性过敏原特异性检测、尿常规、粪常规、动态心电图、肺功能。预计体检时间3天。入院后各项辅助检查结果:动态心电图（24小时）:见附页肺功能+舒张试验：见附页实验室检查:见附页出院诊断：1.高甘油三酯血症2.焦虑症3.早搏（偶发）建议：1.高甘油三酯血症：低脂低糖饮食，加强运动，控制体重，复查肝功、血脂。2.焦虑症：建议服药：来士普5mg1/早，1周后改为10mg1/早，维持至少半年，神经内科随诊。3.早搏（偶发）：目前不需药物治疗。如有反复心悸，症状明显及时复查动态心电图，根据结果决定是否需进一步治疗。心内科门诊随访。4.保持合理的饮食生活习惯，避免劳累，定期体检。2016-08-04出院小结入院日期：2016-08-02入院诊断：胸闷待查出院日期：2016年08月04日出院诊断：1.焦虑症2.高甘油三酯血症住院天数：2天住院经过：陈美华,女,54岁,汉族，已婚，因“发作性胸闷、气促2周”门诊拟“胸闷待查”于2016-08-02收入院。入院查体：体型偏胖，浅表淋巴结未触及。心肺听诊无明显异常。心肺听诊无明显异常。腹部平坦，全腹未扪及明显包块，无压痛及反跳痛。双下肢无水肿。辅检：肺功能：通气功能正常，弥散功能正常，残气量下降，支气管舒张试验阴性，改善量为-20ml；动态心电图示窦性心律房性早搏（18个单发房早，2次成对房早），时呈房性早搏未下传，三联律，成对房性早搏；室性早搏（1个）。入院后完善相关检查，给予镇静、抗焦虑药物治疗，住院期间病情平稳，无明显胸闷、气促症状发生。目前患者一般情况好，病情平稳，经上级医师同意予以今日出院。出院医嘱：1.出院带药：来士普5mg1/日口服（1周后改10mg1/日）2.低脂低糖饮食，加强运动，控制体重；3.不适随诊。洪惠兰")
+                .replaceAll("【【", "").replaceAll("】】","");
+        System.out.println(test);
+        System.out.println(formatTextByAnchaor(test).replaceAll("【【", "\n【【"));
+    }
 
     private TextFormatter() {
     }
@@ -104,12 +113,13 @@ public class TextFormatter {
      * @return
      * @throws Exception
      */
-    public static String addAnchor(String text, ArrayList<String> anchors) throws Exception {
+    public static String addAnchor(String text, List<String> anchors) throws Exception {
         BufferedReader br = new BufferedReader(new StringReader(text));
         String line = br.readLine();
         ArrayList<String> textLines = new ArrayList<String>();
         while (line != null) {
-            line = line.trim();
+            //line = line.trim();
+            line = StringUtil.removeAllBlank(line);
             textLines.add(line);
             line = br.readLine();
         }
@@ -127,6 +137,8 @@ public class TextFormatter {
         for (int k = 0; k < lines.size(); k++) {
             LineItem lineItem = lines.getObject(k, LineItem.class);
             String tempStr = lineItem.getLineWithAnchorBlackBracket(k, null);
+            tempStr = tempStr.replaceAll("\n", "").replaceAll("\r", "");
+            tempStr = tempStr.replaceAll("【【", "\n【【");
             /*ArrayList<AnchorInfo> anchorInfos = lineItem.anchorInfos;
             for (AnchorInfo anchorInfo : anchorInfos) {
                 if (!anchorOriginalMap.containsKey(anchorInfo.anchor)) {
@@ -140,13 +152,13 @@ public class TextFormatter {
             sbu.append(tempStr).append("\n");
             //sbu.append(tempStr);
         }
-        String result = sbu.toString().replaceAll("\\d【【记录时间】】", "【【记录时间】】").replaceAll("【【时间结束标记】】", "");
+        String result = sbu.toString().replaceAll("\\d【【记录时间】】", "【【记录时间】】").replaceAll("\\d\n【【记录时间】】", "【【记录时间】】").replaceAll("【【时间结束标记】】", "");
         /*for (String value : tempAnchor) {
             anchorOriginalMap.put(value, result);
         }*/
-        //System.out.println(sbu.toString());
         return result;
     }
+
 
     /**
      * 读取Excel数据内容

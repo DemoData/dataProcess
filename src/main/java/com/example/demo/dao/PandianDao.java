@@ -9,5 +9,7 @@ public interface PandianDao {
 
     List<JSONObject> findIdByBatchNo(String batchNo);
 
-    List<JSONObject> findCountByQuery(Query query, String collectionName);
+    List<JSONObject> findListByQuery(Query query, String collectionName);
+
+    Integer findCountByQuery(Query query, String collectionName);
 }
