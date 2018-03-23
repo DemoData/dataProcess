@@ -1,7 +1,7 @@
 package com.example.demo.common.support;
 
 import com.alibaba.fastjson.JSONArray;
-import com.example.demo.util.StringUtil;
+import com.example.demo.common.util.StringUtil;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -30,6 +30,23 @@ public class TextFormatter {
     public final static String TEXT_ARS = "textARS";
     public final static String ANCHOR_EXCEL_PATH = "/Users/liulun/Desktop/上海长海医院/技术用-症状&体征-锚点使用.xlsx";
 
+    public static ArrayList<String> anchorList = null;
+
+    static {
+        //制定需要获取的列
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i <= 23; i++) {
+            if (i != 0 && i != 2 && i != 3) {
+                list.add(i);
+            }
+        }
+        //获取Excel中的锚点
+        try {
+            anchorList = readExcelContent(ANCHOR_EXCEL_PATH, 0, list);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
 
@@ -90,18 +107,7 @@ public class TextFormatter {
     public static String formatTextByAnchaor(String text) {
         String formattedText = null;
         try {
-            //制定需要获取的列
-            List<Integer> list = new ArrayList<>();
-            for (int i = 0; i <= 23; i++) {
-                if (i != 0 && i != 2 && i != 3) {
-                    list.add(i);
-                }
-            }
-            //获取Excel中的锚点
-            ArrayList<String> anchorList = readExcelContent(ANCHOR_EXCEL_PATH, 0, list);
             formattedText = addAnchor(text, anchorList);
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -132,7 +138,6 @@ public class TextFormatter {
                     lines.getObject(k, LineItem.class), k < lines.size() - 1 ? lines.getObject(k + 1, LineItem.class) : null, anchors);
             splitAnchor.tagAnchor();
         }
-//        Set<String> tempAnchor = new HashSet<>();
         StringBuilder sbu = new StringBuilder();
         for (int k = 0; k < lines.size(); k++) {
             LineItem lineItem = lines.getObject(k, LineItem.class);
@@ -149,8 +154,6 @@ public class TextFormatter {
                     anchorCountMap.put(anchorInfo.anchor, anchorCountMap.get(anchorInfo.anchor) + 1);
                 }
             }*/
-            sbu.append(tempStr).append("\n");
-            //sbu.append(tempStr);
         }
         String result = sbu.toString().replaceAll("\\d【【记录时间】】", "【【记录时间】】").replaceAll("\\d\n【【记录时间】】", "【【记录时间】】").replaceAll("【【时间结束标记】】", "");
         /*for (String value : tempAnchor) {

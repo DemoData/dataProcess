@@ -27,6 +27,9 @@ public class MysqlDataSourceConfig {
     public static final String MYSQL_YX_PREFIX = "mysql.yixianxiangguan";
     public static final String MYSQL_YX_DATASOURCE = "yxDataSource";
     public static final String MYSQL_YX_TEMPLATE = "yxJdbcTemplate";
+    public static final String MYSQL_XZDM_PREFIX = "mysql.xiazhidongmaixiangguan";
+    public static final String MYSQL_XZDM_DATASOURCE = "xzdmDataSource";
+    public static final String MYSQL_XZDM_TEMPLATE = "xzdmJdbcTemplate";
 
     @Primary
     @Bean(name = MYSQL_YXZW_DATASOURCE)
@@ -58,6 +61,13 @@ public class MysqlDataSourceConfig {
         return DataSourceBuilder.create().build();
     }
 
+    @Bean(name = MYSQL_XZDM_DATASOURCE)
+    @Qualifier(MYSQL_XZDM_DATASOURCE)
+    @ConfigurationProperties(prefix = MYSQL_XZDM_PREFIX)
+    public DataSource xzdmDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
     @Bean(name = MYSQL_YXZW_TEMPLATE)
     public JdbcTemplate yxzwJdbcTemplate(@Qualifier(MYSQL_YXZW_DATASOURCE) DataSource dataSource) {
         log.info(dataSource.toString());
@@ -78,6 +88,12 @@ public class MysqlDataSourceConfig {
 
     @Bean(name = MYSQL_YX_TEMPLATE)
     public JdbcTemplate yxJdbcTemplate(@Qualifier(MYSQL_YX_DATASOURCE) DataSource dataSource) {
+        log.info(dataSource.toString());
+        return new JdbcTemplate(dataSource);
+    }
+
+    @Bean(name = MYSQL_XZDM_TEMPLATE)
+    public JdbcTemplate xzdmJdbcTemplate(@Qualifier(MYSQL_XZDM_DATASOURCE) DataSource dataSource) {
         log.info(dataSource.toString());
         return new JdbcTemplate(dataSource);
     }
