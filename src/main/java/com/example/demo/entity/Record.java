@@ -1,11 +1,9 @@
 package com.example.demo.entity;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.constant.CommonConstant;
+import com.example.demo.common.constant.CommonConstant;
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

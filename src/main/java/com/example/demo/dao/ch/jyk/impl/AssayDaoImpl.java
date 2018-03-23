@@ -1,11 +1,11 @@
 package com.example.demo.dao.ch.jyk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.constant.CommonConstant;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IAssayDao;
+import com.example.demo.common.constant.CommonConstant;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IAssayDao;
 import com.example.demo.entity.Record;
-import com.example.demo.entity.ch.Assay;
+import com.example.demo.entity.Assay;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -51,7 +51,8 @@ public class AssayDaoImpl extends BaseDao implements IAssayDao {
 
     @Override
     public List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName) {
-        return super.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
+        String sql = "select t.`诊断名称` from `诊断信息` t where t.`一次就诊号`= ? group by t.`诊断名称`";
+        return super.findOrgOdCatByGroupRecordName(sql,dataSource, groupRecordName);
     }
 
     @Override

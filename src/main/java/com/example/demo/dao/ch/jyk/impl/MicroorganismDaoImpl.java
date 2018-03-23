@@ -1,10 +1,10 @@
 package com.example.demo.dao.ch.jyk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IMicroorganismDao;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IMicroorganismDao;
 import com.example.demo.entity.Record;
-import com.example.demo.entity.ch.Microorganism;
+import com.example.demo.entity.Microorganism;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -47,7 +47,8 @@ public class MicroorganismDaoImpl extends BaseDao implements IMicroorganismDao {
 
     @Override
     public List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName) {
-        return super.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
+        String sql = "select t.`诊断名称` from `诊断信息` t where t.`一次就诊号`= ? group by t.`诊断名称`";
+        return super.findOrgOdCatByGroupRecordName(sql,dataSource, groupRecordName);
     }
 
     @Override

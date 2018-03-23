@@ -1,6 +1,6 @@
 package com.example.demo.controller.ch.jyk;
 
-import com.example.demo.service.IDataService;
+import com.example.demo.service.standard.IDataService;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,10 +35,6 @@ public class ClinicalLabContoller {
     @Autowired
     @Qualifier("chyxPathologyService")
     private IDataService pathologyService;
-
-    @Autowired
-    @Qualifier("chyxPatientService")
-    private IDataService patientService;
 
     /**
      * 长海医院化验数据处理
@@ -102,19 +98,6 @@ public class ClinicalLabContoller {
     @GetMapping("/processPathology")
     public String processPathology() {
         if (pathologyService.processData()) {
-            return SUCCESS_FLAG;
-        }
-        return FAIL_FLAG;
-    }
-
-    /**
-     * 长海医院Patient数据处理
-     *
-     * @return
-     */
-    @GetMapping("/processPatient")
-    public String processPatient() {
-        if (patientService.processData()) {
             return SUCCESS_FLAG;
         }
         return FAIL_FLAG;

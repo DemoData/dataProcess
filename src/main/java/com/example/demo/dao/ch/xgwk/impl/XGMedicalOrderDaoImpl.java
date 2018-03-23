@@ -1,10 +1,10 @@
 package com.example.demo.dao.ch.xgwk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IMedicalOrderDao;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IMedicalOrderDao;
 import com.example.demo.entity.Record;
-import com.example.demo.entity.ch.MedicalOrder;
+import com.example.demo.entity.MedicalOrder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;

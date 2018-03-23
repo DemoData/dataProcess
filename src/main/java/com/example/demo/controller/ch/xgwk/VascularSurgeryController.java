@@ -1,6 +1,6 @@
 package com.example.demo.controller.ch.xgwk;
 
-import com.example.demo.service.IDataService;
+import com.example.demo.service.standard.IDataService;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,6 +35,10 @@ public class VascularSurgeryController {
     @Qualifier("chxgInspectionCSXDService")
     private IDataService inspectionCSXDService;
 
+    @Autowired
+    @Qualifier("chxgMedicalHistoryService")
+    private IDataService medicalHistoryService;
+
     @GetMapping("/processMedicalOrder")
     public String processMedicalOrder() {
         if (medicalOrderService.processData()) {
@@ -66,5 +70,12 @@ public class VascularSurgeryController {
         }
         return FAIL_FLAG;
     }
-}
 
+    @GetMapping("/processMedicalHistory")
+    public String processMedicalHistory() {
+        if (medicalHistoryService.processData()) {
+            return SUCCESS_FLAG;
+        }
+        return FAIL_FLAG;
+    }
+}

@@ -1,9 +1,9 @@
 package com.example.demo.dao.ch.xgwk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IInspectionDao;
-import com.example.demo.entity.ch.Inspection;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IInspectionDao;
+import com.example.demo.entity.Inspection;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;

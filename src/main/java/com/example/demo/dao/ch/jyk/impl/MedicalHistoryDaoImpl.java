@@ -1,9 +1,9 @@
 package com.example.demo.dao.ch.jyk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IMedicalHistoryDao;
-import com.example.demo.entity.ch.MedicalHistory;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IMedicalHistoryDao;
+import com.example.demo.entity.MedicalHistory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -13,7 +13,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 @Slf4j
-@Repository
+@Repository("jyMedicalHistoryDao")
 public class MedicalHistoryDaoImpl extends BaseDao implements IMedicalHistoryDao {
 
     @Override
@@ -42,21 +42,21 @@ public class MedicalHistoryDaoImpl extends BaseDao implements IMedicalHistoryDao
 
     @Override
     public List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName) {
-        return super.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
+        String sql = "select t.`诊断名称` from `诊断信息` t where t.`一次就诊号`= ? group by t.`诊断名称`";
+        return super.findOrgOdCatByGroupRecordName(sql,dataSource, groupRecordName);
     }
+
+    @Override
+    public int batchUpdateContent(String dataSource, List<Object[]> params) {
+        return 0;
+    }
+
 
     @Override
     public void batchInsert2HRS(List<JSONObject> records, String collectionName) {
         synchronized (this) {
             hrsMongoTemplate.insert(records, collectionName);
         }
-    }
-
-    @Override
-    public void updateStorage(String dataSource) {
-//        String sql = "update `病历文书` set isStorage=1 where status = 0 AND (mapping like '%入院记录%' OR mapping like '%出院记录%')";
-//        int rows = getJdbcTemplate(dataSource).update(sql);
-//        log.info("updateStorage(): There are " + rows + " updated");
     }
 
     class MedicalHistoryRowMapper implements RowMapper<MedicalHistory> {

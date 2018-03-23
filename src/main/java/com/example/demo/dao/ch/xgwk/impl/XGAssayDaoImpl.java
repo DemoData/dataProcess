@@ -1,12 +1,10 @@
 package com.example.demo.dao.ch.xgwk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IAssayDao;
-import com.example.demo.dao.ch.IMedicalOrderDao;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IAssayDao;
 import com.example.demo.entity.Record;
-import com.example.demo.entity.ch.Assay;
-import com.example.demo.entity.ch.MedicalOrder;
+import com.example.demo.entity.Assay;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -42,7 +40,8 @@ public class XGAssayDaoImpl extends BaseDao implements IAssayDao {
 
     @Override
     public List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName) {
-        return super.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
+        String sql = "select t.`诊断名称` from `诊断信息` t where t.`一次就诊号`= ? group by t.`诊断名称`";
+        return super.findOrgOdCatByGroupRecordName(sql,dataSource, groupRecordName);
     }
 
     @Override

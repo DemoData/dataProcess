@@ -1,9 +1,9 @@
 package com.example.demo.dao.ch.jyk.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.example.demo.dao.ch.BaseDao;
-import com.example.demo.dao.ch.IPathologyDao;
-import com.example.demo.entity.ch.Pathology;
+import com.example.demo.dao.BaseDao;
+import com.example.demo.dao.standard.IPathologyDao;
+import com.example.demo.entity.Pathology;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -37,7 +37,8 @@ public class PathologyDaoImpl extends BaseDao implements IPathologyDao {
 
     @Override
     public List<String> findOrgOdCatByGroupRecordName(String dataSource, String groupRecordName) {
-        return super.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
+        String sql = "select t.`诊断名称` from `诊断信息` t where t.`一次就诊号`= ? group by t.`诊断名称`";
+        return super.findOrgOdCatByGroupRecordName(sql,dataSource, groupRecordName);
     }
 
     @Override
