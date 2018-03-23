@@ -1,6 +1,6 @@
 package com.example.demo.test.main;
 
-import com.example.demo.constant.CommonConstant;
+import com.example.demo.common.constant.CommonConstant;
 import com.example.demo.util.FileUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;

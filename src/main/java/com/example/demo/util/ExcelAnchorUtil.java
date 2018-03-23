@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.example.demo.common.support.LineItem;
 import com.example.demo.common.support.SplitAnchor;
 import com.example.demo.common.support.TextFormatter;
+import com.example.demo.common.util.PatternUtil;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;

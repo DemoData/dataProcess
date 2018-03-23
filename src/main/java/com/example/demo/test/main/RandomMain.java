@@ -2,7 +2,7 @@ package com.example.demo.test.main;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.common.support.TextFormatter;
-import com.example.demo.util.PatternUtil;
+import com.example.demo.common.util.PatternUtil;
 import com.mongodb.*;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoCollection;

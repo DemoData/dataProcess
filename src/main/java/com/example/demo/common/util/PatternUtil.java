@@ -1,6 +1,7 @@
 package com.example.demo.common.util;
 
-import com.example.demo.constant.CommonConstant;
+import com.example.demo.common.constant.CommonConstant;
+import com.example.demo.util.FileUtil;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;

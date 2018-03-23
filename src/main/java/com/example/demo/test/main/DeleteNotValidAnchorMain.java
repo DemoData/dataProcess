@@ -1,7 +1,7 @@
 package com.example.demo.test.main;
 
 import com.example.demo.util.FileUtil;
-import com.example.demo.util.PatternUtil;
+import com.example.demo.common.util.PatternUtil;
 
 import java.io.*;
 import java.util.*;
