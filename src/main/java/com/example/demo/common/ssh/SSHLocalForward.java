@@ -72,7 +72,7 @@ public class SSHLocalForward {
             client = new SSHClient();
 
             client.loadKnownHosts();
-            client.addHostKeyVerifier("04:e5:a4:86:2b:ad:fd:ed:19:0b:6c:69:2c:6c:f9:4d");
+            client.addHostKeyVerifier("f9:6e:08:c2:c4:32:fc:38:86:b3:5b:5f:20:e5:fd:09");
             client.connect(sshHost);
             try {
 

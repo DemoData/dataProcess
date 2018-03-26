@@ -48,7 +48,7 @@ public class FileUtil {
         File[] childFileArr = file.listFiles();
         for(int i = 0; i < childFileArr.length; i++){
             if(childFileArr[i].isDirectory()){
-                fileList.addAll(listAllFile(childFileArr[i].getAbsolutePath()));
+                fileList.addAll(listTxtAllFile(childFileArr[i].getAbsolutePath()));
             }else if(childFileArr[i].getName().endsWith(".txt")){
                 fileList.add(childFileArr[i]);
             }

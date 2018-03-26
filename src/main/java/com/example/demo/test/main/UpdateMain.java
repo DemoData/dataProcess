@@ -3,6 +3,7 @@ package com.example.demo.test.main;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.common.support.TextFormatter;
+import com.example.demo.util.FileUtil;
 import com.mongodb.*;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -69,50 +70,49 @@ public class UpdateMain {
 
 
     public static void imRecord() throws Exception {
-
+        List<File> fileList = FileUtil.listTxtAllFile("/Users/liulun/Desktop/上海长海医院/血管外科/txt");
         BasicDBObject docQuery = new BasicDBObject();
-        docQuery.append("batchNo", "shch20180309");
+        docQuery.append("batchNo", "shch20180315");
         docQuery.append("recordType", new BasicDBObject("$in", new String[]{"入院记录","出院记录"}));
         System.out.println(dc.count(docQuery));
         FindIterable<Document> iterable = dc.find(docQuery);
         MongoCursor<Document> itor = iterable.iterator();
         int i = 0;
+        Map<String, String> resultMap = new HashMap<>();
         while(itor.hasNext()){
             Document document = itor.next();
             JSONObject jsonObject = JSONObject.parseObject(document.toJson());
             String textARS = jsonObject.getJSONObject("info").getString("textARS");
+            String patientId = jsonObject.getString("patientId");
+            patientId = patientId.substring(5);
+            String startLine = textARS.substring(0, textARS.indexOf("【【"));
             //String text = jsonObject.getJSONObject("info").getString("text");
-            String result = TextFormatter.addAnchor(textARS, anchors);
-            int lastIndex = 0;
-            while(result.indexOf("【【病理结果】】", lastIndex) != -1){
-                int index = result.indexOf("【【病理结果】】", lastIndex);
-                int nextIndex = result.indexOf("【【", index + 1);
-                if(nextIndex == -1){
-                    nextIndex = result.length();
+            //String result = TextFormatter.addAnchor(textARS, anchors);
+            for(File file : fileList){
+                String fileName = file.getName();
+                if(fileName.startsWith(patientId)){
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "GBK"));
+                    String line = FileUtil.readFile(file);
+                    if(line.equals(textARS)){
+                        resultMap.put(fileName, jsonObject.getString("_id"));
+                    }
                 }
-                if(nextIndex - index > 358){
-                    StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.append(result.substring(0, index - 1));
-                    stringBuilder.append("病理结果");
-                    stringBuilder.append(result.substring(index + 8));
-                    result = stringBuilder.toString();
-                }
-                lastIndex = index + 1;
             }
-            jsonObject.getJSONObject("info").put("text", result);
+            //jsonObject.getJSONObject("info").put("text", result);
 
 //            if(!jsonObject.getJSONObject("info").containsKey("text_back")){
 //                jsonObject.getJSONObject("info").put("text_back", text);
 //            }
-            document = Document.parse(jsonObject.toJSONString());
+            /*document = Document.parse(jsonObject.toJSONString());
             Object _id =  jsonObject.get("_id");
             if(_id instanceof JSONObject){
                 dc.updateOne(new Document("_id", new ObjectId(((JSONObject)_id).getString("$oid"))),  new Document("$set", document));
             }else{
                 dc.updateOne(new Document("_id", jsonObject.get("_id")),  new Document("$set", document));
-            }
+            }*/
             System.out.println(++i);
         }
+        System.out.println(resultMap.size());
     }
 
 

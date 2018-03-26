@@ -154,6 +154,8 @@ public class TextFormatter {
                     anchorCountMap.put(anchorInfo.anchor, anchorCountMap.get(anchorInfo.anchor) + 1);
                 }
             }*/
+            sbu.append(tempStr);
+            sbu.append("\n");
         }
         String result = sbu.toString().replaceAll("\\d【【记录时间】】", "【【记录时间】】").replaceAll("\\d\n【【记录时间】】", "【【记录时间】】").replaceAll("【【时间结束标记】】", "");
         /*for (String value : tempAnchor) {

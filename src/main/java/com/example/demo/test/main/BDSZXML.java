@@ -199,7 +199,9 @@ public class BDSZXML {
         int endIndex = text.indexOf("<data>");
         text = text.substring(xmlIndex, endIndex + 6);
         text = text.replaceAll("<([\\s\\S]+?)>", "");
+        //System.out.println(text);
         text = TextFormatter.formatTextByAnchaor(text);
+        System.out.println(text);
         BufferedReader br = new BufferedReader(new StringReader(text));
         String line = br.readLine();
         StringBuilder stringBuilder = new StringBuilder();
