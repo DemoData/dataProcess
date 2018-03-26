@@ -96,6 +96,8 @@ public class RandomMain {
     private static JSONObject processJSONObject(JSONObject jsonObject) throws Exception{
         String textARS = jsonObject.getJSONObject("info").getString("textARS");
         String text = TextFormatter.addAnchor(textARS, anchors);
+        text = text.replaceAll("\n", "").replaceAll("\r", "");
+        text = text.replaceAll("【【", "\n【【");
         JSONObject resultItem = new JSONObject();
         resultItem.put("原文", text);
         resultItem.put("原类型", jsonObject.getString("sourceRecordType"));
@@ -107,7 +109,7 @@ public class RandomMain {
     }
 
 
-    public static int countAnchorCount(String text){
+    private static int countAnchorCount(String text){
         int count = 0;
         Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
         while(matcher.find()){

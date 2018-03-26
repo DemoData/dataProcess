@@ -747,7 +747,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         }
         jsonObject.put("表格病历", pandianDao.findCountByQuery(new Query()
                 .addCriteria(Criteria.where("batchNo").is(batchNo))
-                .addCriteria(Criteria.where("format").is("text"))
+                .addCriteria(Criteria.where("format").is("table"))
                 .addCriteria(Criteria.where("deleted").is(false)), "Record"));
         //jsonObject.put("表格病历", jsonObject.getInteger("化验记录"));
         jsonObject.put("出入院未找到患者ID列表", notFoundSet);

@@ -142,8 +142,8 @@ public class TextFormatter {
         for (int k = 0; k < lines.size(); k++) {
             LineItem lineItem = lines.getObject(k, LineItem.class);
             String tempStr = lineItem.getLineWithAnchorBlackBracket(k, null);
-            tempStr = tempStr.replaceAll("\n", "").replaceAll("\r", "");
-            tempStr = tempStr.replaceAll("【【", "\n【【");
+            //tempStr = tempStr.replaceAll("\n", "").replaceAll("\r", "");
+            //tempStr = tempStr.replaceAll("【【", "\n【【");
             /*ArrayList<AnchorInfo> anchorInfos = lineItem.anchorInfos;
             for (AnchorInfo anchorInfo : anchorInfos) {
                 if (!anchorOriginalMap.containsKey(anchorInfo.anchor)) {
