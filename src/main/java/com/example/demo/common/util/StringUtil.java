@@ -9,7 +9,7 @@ public class StringUtil {
     public static String removeAllBlank(String s){
         String result = "";
         if(null!=s && !"".equals(s)){
-            result = s.replaceAll("[　*| *| *|//s*]*", "");
+            result = s.replaceAll("[　*| *| *|\\s*]*", "");
         }
         return result;
     }
