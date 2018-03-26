@@ -725,7 +725,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             }else{
                 loopQueryObject.put("recordType", CommonConstant.RECORD_TYPE[i]);
             }
-            loopFieldObject.put("deleted", false);
+            loopQueryObject.put("deleted", false);
             List<JSONObject> loopResult = pandianDao.findListByQuery(new BasicQuery(loopQueryObject, loopFieldObject), "Record");
             jsonObject.put(CommonConstant.RECORD_TYPE[i], loopResult.size());
             for(JSONObject value : loopResult){

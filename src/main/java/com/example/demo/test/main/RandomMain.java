@@ -44,7 +44,7 @@ public class RandomMain {
     //static MongoClient mongo = new MongoClient("localhost", 27017);
     static MongoDatabase db = mongo.getDatabase("HRS-live");
     static MongoCollection dc = db.getCollection("Record");
-    static List<String> result = new ArrayList<>();
+    static List<JSONObject> result = new ArrayList<>();
     public final static String ANCHOR_EXCEL_PATH = "/Users/liulun/Desktop/上海长海医院/技术用-症状&体征-锚点使用.xlsx";
 
     public static List<String> anchors;
@@ -60,7 +60,8 @@ public class RandomMain {
             //锚点数据
             anchors = readExcelContent(ANCHOR_EXCEL_PATH, 0, list);
             imRecord();
-            writer("/Users/liulun/Desktop/上海长海医院","入院记录", "xlsx", result, new String[]{"原文","锚点数量"});
+            writer("/Users/liulun/Desktop/上海长海医院","记录类型表", "xlsx", result, new String[]{"原类型","子类型","记录类型",
+                    "原文","锚点数量", "RID"});
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,34 +69,41 @@ public class RandomMain {
 
 
     public static void imRecord() throws Exception {
-
-        BasicDBObject docQuery = new BasicDBObject();
-        docQuery.append("batchNo", "shch20180315");
-        docQuery.append("recordType", new BasicDBObject("$in", new String[]{"入院记录","出院记录"}));
-        System.out.println(dc.count(docQuery));
-        List<Bson> bsons = new ArrayList<>();
-        //bsons.add(docQuery);
-        bsons.add(new Document("$match", new Document("batchNo", "shch20180315")));
-        List<Document> recordTypeList = new ArrayList<Document>();
-        recordTypeList.add(new Document("recordType", "入院记录"));
-        //recordTypeList.add(new Document("recordType", "出院记录"));
-        bsons.add(new Document("$match", new Document("$or", recordTypeList)));
-        bsons.add(new Document("$sample", new Document("size", 50)));
-        AggregateIterable<Document> iterable = dc.aggregate(bsons).allowDiskUse(true);
-        //FindIterable<Document> iterable = dc.find(docQuery);
-        MongoCursor<Document> itor = iterable.iterator();
-        int i = 0;
-        while(itor.hasNext()){
-            System.out.println(i++);
-            Document document = itor.next();
-            //System.out.println(document.toJson());
-            JSONObject jsonObject = JSONObject.parseObject(document.toJson());
-            String textARS = jsonObject.getJSONObject("info").getString("textARS");
-            String text = TextFormatter.addAnchor(textARS, anchors);
-            //System.out.println(text);
-            result.add(text);
-;            //System.out.println(jsonObject.getJSONObject("info").getString("text"));
+        String[] recordArr = new String[]{"入院记录", "出院记录"};
+        for(int i = 0; i < recordArr.length; i++){
+            System.out.println(recordArr[i]);
+            List<Bson> bsons = new ArrayList<>();
+            bsons.add(new Document("$match", new Document("batchNo", "shch20180309")));
+            List<Document> recordTypeList = new ArrayList<Document>();
+            recordTypeList.add(new Document("recordType", recordArr[i]));
+            //recordTypeList.add(new Document("recordType", "出院记录"));
+            bsons.add(new Document("$match", new Document("$or", recordTypeList)));
+            bsons.add(new Document("$sample", new Document("size", 50)));
+            AggregateIterable<Document> iterable = dc.aggregate(bsons).allowDiskUse(true);
+            MongoCursor<Document> itor = iterable.iterator();
+            int j = 0;
+            while(itor.hasNext()){
+                System.out.println(j++);
+                Document document = itor.next();
+                JSONObject jsonObject = JSONObject.parseObject(document.toJson());
+                result.add(processJSONObject(jsonObject));
+                //System.out.println(jsonObject.getJSONObject("info").getString("text"));
+            }
         }
+
+    }
+
+    private static JSONObject processJSONObject(JSONObject jsonObject) throws Exception{
+        String textARS = jsonObject.getJSONObject("info").getString("textARS");
+        String text = TextFormatter.addAnchor(textARS, anchors);
+        JSONObject resultItem = new JSONObject();
+        resultItem.put("原文", text);
+        resultItem.put("原类型", jsonObject.getString("sourceRecordType"));
+        resultItem.put("子类型", jsonObject.getString("subRecordType"));
+        resultItem.put("记录类型", jsonObject.getString("recordType"));
+        resultItem.put("锚点数量", countAnchorCount(text));
+        resultItem.put("RID", jsonObject.getString("_id"));
+        return resultItem;
     }
 
 
@@ -108,7 +116,7 @@ public class RandomMain {
         return count;
     }
 
-    public static void writer(String path, String fileName,String fileType,List<String> result,String titleRow[]) throws IOException {
+    public static void writer(String path, String fileName,String fileType,List<JSONObject> result,String titleRow[]) throws IOException {
         Workbook wb = null;
         String excelPath = path+File.separator+fileName+"."+fileType;
         File file = new File(excelPath);
@@ -125,7 +133,7 @@ public class RandomMain {
                 throw new RuntimeException("文件格式不正确");
             }
             //创建sheet对象
-            sheet = (Sheet) wb.createSheet("锚点原文对应表");
+            sheet = (Sheet) wb.createSheet("记录类型表");
             OutputStream outputStream = new FileOutputStream(excelPath);
             wb.write(outputStream);
             outputStream.flush();
@@ -144,7 +152,7 @@ public class RandomMain {
         }
         //创建sheet对象
         if (sheet==null) {
-            sheet = (Sheet) wb.createSheet("sheet1");
+            sheet = (Sheet) wb.createSheet("记录类型表");
         }
 
         //添加表头
@@ -155,14 +163,13 @@ public class RandomMain {
             cell.setCellValue(titleRow[i]);
         }
         int rowIndex = 0;
-        for(String value : result){
+        for(JSONObject jsonObject : result) {
             row = sheet.createRow(++rowIndex);
-            cell = row.createCell(0);
-            cell.setCellValue(value);
-            cell = row.createCell(1);
-            cell.setCellValue(countAnchorCount(value));
+            for (int i = 0; i < titleRow.length; i++) {
+                cell = row.createCell(i);
+                cell.setCellValue(jsonObject.getString(titleRow[i]));
+            }
         }
-
         //创建文件流
         OutputStream stream = new FileOutputStream(excelPath);
         //写入数据
