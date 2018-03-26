@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: PatientDemo-1.0.jar
-Main-Class: com.example.demo.test.main.UpdateMain
-
