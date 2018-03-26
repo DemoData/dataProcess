@@ -656,6 +656,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         DBObject dbObject = new BasicDBObject();
         dbObject.put("batchNo", batchNo);
         dbObject.put("recordType", "入院记录");
+        dbObject.put("deleted", false);
         DBObject fieldObject = new BasicDBObject();
         fieldObject.put("patientId", true);
         fieldObject.put("groupRecordName", true);
@@ -667,10 +668,12 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         DBObject chuyuanObject = new BasicDBObject();
         chuyuanObject.put("batchNo", batchNo);
         chuyuanObject.put("recordType", "出院记录");
+        chuyuanObject.put("deleted", false);
         Query chuyuanQuery = new BasicQuery(chuyuanObject, fieldObject);
         List<JSONObject> chuyuan = pandianDao.findListByQuery(chuyuanQuery, "Record");
         jsonObject.put("出院记录", chuyuan.size());
-        jsonObject.put("病历记录汇总", pandianDao.findCountByQuery(new Query().addCriteria(Criteria.where("batchNo").is(batchNo)), "Record"));
+        jsonObject.put("病历记录汇总", pandianDao.findCountByQuery(new Query().addCriteria(Criteria.where("batchNo").is(batchNo))
+                .addCriteria(Criteria.where("deleted").is(false)), "Record"));
         System.out.println(jsonObject);
         Set<String> groupRecordNameSet = new HashSet<>();
         Set<String> ruyuanSet =new HashSet<>();
@@ -722,6 +725,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             }else{
                 loopQueryObject.put("recordType", CommonConstant.RECORD_TYPE[i]);
             }
+            loopFieldObject.put("deleted", false);
             List<JSONObject> loopResult = pandianDao.findListByQuery(new BasicQuery(loopQueryObject, loopFieldObject), "Record");
             jsonObject.put(CommonConstant.RECORD_TYPE[i], loopResult.size());
             for(JSONObject value : loopResult){
@@ -743,7 +747,8 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         }
         jsonObject.put("表格病历", pandianDao.findCountByQuery(new Query()
                 .addCriteria(Criteria.where("batchNo").is(batchNo))
-                .addCriteria(Criteria.where("format").is("text")), "Record"));
+                .addCriteria(Criteria.where("format").is("text"))
+                .addCriteria(Criteria.where("deleted").is(false)), "Record"));
         //jsonObject.put("表格病历", jsonObject.getInteger("化验记录"));
         jsonObject.put("出入院未找到患者ID列表", notFoundSet);
         writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)", "xlsx", anchorOriginalMap, anchorCountMap, new String[]{"锚点", "数量", "原文"});

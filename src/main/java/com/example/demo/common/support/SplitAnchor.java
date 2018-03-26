@@ -57,6 +57,11 @@ public class SplitAnchor {
         need.add("民族");
         need.add("建议");
         need.add("病理结果");
+        need.add("随访计划");
+        need.add("上级医生");
+        need.add("病案号");
+        need.add("MR号");
+        need.add("疼痛部位");
         //need.add("现病史");
     }
 
