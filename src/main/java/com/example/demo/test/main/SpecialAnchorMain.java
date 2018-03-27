@@ -38,6 +38,7 @@ public class SpecialAnchorMain {
         //出院小结
         /*specialAnchorList.add("入院查体");
         specialAnchorList.add("入院辅检");*/
+        //死亡记录
         /*specialAnchorList.add("入院诊断");
         specialAnchorList.add("出院诊断");
         specialAnchorList.add("病理诊断");
@@ -63,6 +64,7 @@ public class SpecialAnchorMain {
         specialAnchorList.add("住院天数");
         specialAnchorList.add("生前工作单位");
         specialAnchorList.add("常住户口地址");*/
+        //手术记录
         specialAnchorList.add("术前诊断");
         specialAnchorList.add("术后诊断");
         specialAnchorList.add("手术人员");
@@ -90,7 +92,7 @@ public class SpecialAnchorMain {
                     for(String anchor : specialAnchorList){
                         //line = line.replaceAll("。" + anchor + "：", "。【【" + anchor + "】】：");//出院小结
                         //line = line.replaceAll(anchor + "：", "【【" + anchor + "】】：");//死亡记录
-                        line = line.replaceAll(anchor + " ", "【【" + anchor + "】】：");
+                        line = line.replaceAll(anchor + " ", "【【" + anchor + "】】：");//手术记录
                     }
                     stringBuilder.append(line);
                 }

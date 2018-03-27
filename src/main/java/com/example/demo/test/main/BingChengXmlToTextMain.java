@@ -18,7 +18,7 @@ public class BingChengXmlToTextMain {
 
     private static List<String> dirArr = new ArrayList<>();
     static {
-        dirArr.add("麻醉");
+        dirArr.add("病程记录");
     }
 
     static {
@@ -70,7 +70,7 @@ public class BingChengXmlToTextMain {
                         if(matcher.find()){
                             anchor = matcher.group(2);
                             text = matcher.group(4);
-                            text = StringUtil.removeAllBlank(text);
+                            //text = StringUtil.removeAllBlank(text);
                         }
                     }else if(line.startsWith("<section")){
                         Matcher matcher = PatternUtil.SECTION_PATTERN.matcher(line);

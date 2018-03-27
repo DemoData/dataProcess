@@ -62,6 +62,8 @@ public class SplitAnchor {
         need.add("病案号");
         need.add("MR号");
         need.add("疼痛部位");
+        need.add("病理号");
+        need.add("病例特点");
         //need.add("现病史");
     }
 
@@ -195,7 +197,8 @@ public class SplitAnchor {
                     if(!notNeed.contains(anchor)){
                         isStandardAnchor = false;
                     }
-                    if (anchor.length() <= 2 && !isStandardAnchor || need.contains(anchor)){
+                    //if (anchor.length() <= 2 && !isStandardAnchor || need.contains(anchor)){
+                    if (!isStandardAnchor || need.contains(anchor)){
                         //2个字内的锚点必须后续有冒号
                         if (!(line.line.length() > index + anchor.length() && (line.line.charAt(index + anchor.length()) == '：'
                                 || line.line.charAt(index + anchor.length()) == '】' || line.line.charAt(index + anchor.length()) == ':'

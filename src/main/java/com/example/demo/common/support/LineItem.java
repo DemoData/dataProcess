@@ -109,10 +109,10 @@ public class LineItem {
         }
 
         //第二行如果没有锚点，就给一个默认的
-        int addNormalAtLine = 1;
+        /*int addNormalAtLine = 1;
         if (lineCounter == addNormalAtLine && !lineWithA.startsWith("【【")){
             lineWithA = "【【无段落标题】】" + lineWithA;
-        }
+        }*/
 
         //打上记录时间
         if (lineCounter == 0){

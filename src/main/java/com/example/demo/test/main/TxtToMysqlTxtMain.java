@@ -12,7 +12,12 @@ public class TxtToMysqlTxtMain {
 
     private static List<String> dirArr = new ArrayList<>();
     static {
+        dirArr.add("手术记录");
+        dirArr.add("病程记录");
+        dirArr.add("出院小结");
         dirArr.add("麻醉");
+        dirArr.add("入院记录");
+        dirArr.add("死亡记录");
         //dirArr.add("入院记录");
         /*dirArr.add("病程记录");
         dirArr.add("出院小结");
@@ -75,11 +80,11 @@ public class TxtToMysqlTxtMain {
                     stringBuilder.append("#$#");
                     stringBuilder.append(fileNameArr[0]);
                     stringBuilder.append("#$#");
-                    stringBuilder.append(fileNameArr[2]);
+                    //stringBuilder.append();
+                    //stringBuilder.append("#$#");
+                    stringBuilder.append(fileNameArr[2] + "_" + fileNameArr[1]);
                     stringBuilder.append("#$#");
                     stringBuilder.append(mapping.get(dirName));
-                    stringBuilder.append("#$#");
-                    stringBuilder.append(value);
                     stringBuilder.append("#$#");
                     StringBuilder orgType = new StringBuilder();
                     for(String key : typeFileNameMap.keySet()){
@@ -94,6 +99,8 @@ public class TxtToMysqlTxtMain {
                     }else{
                         stringBuilder.append("\\N");
                     }
+                    stringBuilder.append("#$#");
+                    stringBuilder.append(value);
                     stringBuilder.append("\n");
                     bufferedWriter.write(stringBuilder.toString());
                 }

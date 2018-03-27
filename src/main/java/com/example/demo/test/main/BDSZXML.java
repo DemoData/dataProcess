@@ -207,7 +207,7 @@ public class BDSZXML {
         StringBuilder stringBuilder = new StringBuilder();
         while (line != null) {
             //line = line.trim();
-            line = StringUtil.removeAllBlank(line);
+            //line = StringUtil.removeAllBlank(line);
             if(StringUtils.isNotBlank(line)){
                 stringBuilder.append(line);
             }

@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 
 public class AnchorCalMain {
 
-    static MongoCredential mongoCredential = MongoCredential.createCredential("yy", "HRS-live", "rf1)Rauwu3dpsGid".toCharArray());
+    static MongoCredential mongoCredential = MongoCredential.createCredential("xh", "HRS-test", "rt0hizu{j9lzJNqi".toCharArray());
 
     static ServerAddress serverAddress = new ServerAddress("localhost", 3718);
 
@@ -33,13 +33,13 @@ public class AnchorCalMain {
     //static ServerAddress serverAddress = new ServerAddress("localhost", 27017);
     static MongoClient mongo = new MongoClient(serverAddress, mongoCredentials, new MongoClientOptions.Builder().build());
     //static MongoClient mongo = new MongoClient("localhost", 27017);
-    static MongoDatabase db = mongo.getDatabase("HRS-live");
+    static MongoDatabase db = mongo.getDatabase("HRS-test");
     static MongoCollection dc = db.getCollection("Record");
     static List<JSONObject> result = new ArrayList<>();
 
     public static void main(String[] args) {
         List<Bson> bsons = new ArrayList<>();
-        bsons.add(new Document("$match", new Document("batchNo", "shch20180309")));
+        bsons.add(new Document("$match", new Document("batchNo", "shch20180327")));
         List<Document> recordTypeList = new ArrayList<Document>();
         recordTypeList.add(new Document("recordType", "入院记录"));
         recordTypeList.add(new Document("recordType", "出院记录"));
@@ -48,7 +48,6 @@ public class AnchorCalMain {
         AggregateIterable<Document> iterable = dc.aggregate(bsons).allowDiskUse(true);
         MongoCursor<Document> itor = iterable.iterator();
         Map<String, JSONObject> anchorOriginalMap = new HashMap<>();
-        Map<String ,Integer> anchorCountMap = new HashMap<>();
         int i = 0;
         while(itor.hasNext()){
             System.out.println(++i);
@@ -60,23 +59,23 @@ public class AnchorCalMain {
             Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
             while(matcher.find()){
                 String anchor = matcher.group(1);
-                if(!anchorCountMap.containsKey(anchor)){
-                    anchorCountMap.put(anchor, 1);
+                if(!anchorOriginalMap.containsKey(anchor)){
                     JSONObject resultItem = new JSONObject();
                     resultItem.put("原文", text);
                     resultItem.put("锚点数量", AnchorUtil.countAnchorCount(text));
                     resultItem.put("RID", jsonObject.getString("_id"));
+                    resultItem.put("出现次数", 1);
                     anchorOriginalMap.put(anchor, resultItem);
                 }else{
-                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
+                    JSONObject value = anchorOriginalMap.get(anchor);
+                    value.put("出现次数", value.getInteger("出现次数") + 1);
                 }
             }
         }
-        writer("/Users/liulun/Desktop/上海长海医院", "锚点原文对应表(mongo)", "xlsx", anchorOriginalMap, anchorCountMap, new String[]{"锚点", "原文","锚点数量","RID"});
+        writer("/Users/liulun/Desktop/上海长海医院", "锚点原文对应表(mongo)", "xlsx", anchorOriginalMap, new String[]{"锚点", "原文","锚点数量","RID","出现次数"});
     }
 
-    public static void writer(String path, String fileName,String fileType,Map<String, JSONObject> anchorOriginalMap,
-                       Map<String, Integer> anchorCountMap,String titleRow[]){
+    public static void writer(String path, String fileName,String fileType,Map<String, JSONObject> anchorOriginalMap,String titleRow[]){
         try{
 
             Workbook wb = null;

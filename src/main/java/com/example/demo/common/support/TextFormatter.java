@@ -125,7 +125,7 @@ public class TextFormatter {
         ArrayList<String> textLines = new ArrayList<String>();
         while (line != null) {
             //line = line.trim();
-            line = StringUtil.removeAllBlank(line);
+            //line = StringUtil.removeAllBlank(line);
             textLines.add(line);
             line = br.readLine();
         }

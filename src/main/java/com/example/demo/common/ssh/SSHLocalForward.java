@@ -72,7 +72,7 @@ public class SSHLocalForward {
             client = new SSHClient();
 
             client.loadKnownHosts();
-            client.addHostKeyVerifier("f9:6e:08:c2:c4:32:fc:38:86:b3:5b:5f:20:e5:fd:09");
+            client.addHostKeyVerifier("34:89:41:c6:92:66:27:00:34:ab:b5:95:55:10:45:6d");
             client.connect(sshHost);
             try {
 
@@ -107,8 +107,10 @@ public class SSHLocalForward {
     }
 
     public static  void main(String[] args){
-        SSHLocalForward forward = new SSHLocalForward("121.199.8.159", "root", "jakt7ax2qOx.dyFb",
-                "dds-bp1baff8ad4002a42.mongodb.rds.aliyuncs.com", 3717);
+        /*SSHLocalForward forward = new SSHLocalForward("121.199.8.159", "root", "jakt7ax2qOx.dyFb",
+                "dds-bp1baff8ad4002a42.mongodb.rds.aliyuncs.com", 3717);*/
+        SSHLocalForward forward = new SSHLocalForward("121.199.26.56", "root", "drm9joUtrzvPzf1~",
+                "dds-bp1f7b56b50093041.mongodb.rds.aliyuncs.com", 3717);
         forward.localPort = 3718;
         try {
             forward.connectSSH();

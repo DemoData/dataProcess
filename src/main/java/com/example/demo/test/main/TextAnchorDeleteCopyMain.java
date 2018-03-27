@@ -10,7 +10,7 @@ public class TextAnchorDeleteCopyMain {
 
     private static List<String> dirArr = new ArrayList<>();
     static {
-        dirArr.add("麻醉");
+        dirArr.add("病程记录");
         //dirArr.add("入院记录");
         /*dirArr.add("病程记录");
         dirArr.add("出院小结");

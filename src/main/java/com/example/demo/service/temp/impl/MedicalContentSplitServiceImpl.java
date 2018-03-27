@@ -10,6 +10,7 @@ import com.example.demo.common.util.PatternUtil;
 import com.example.demo.common.util.StringUtil;
 import com.example.demo.common.util.TimeUtil;
 import com.example.demo.entity.MedicalContentSplitModel;
+import com.example.demo.util.AnchorUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -625,7 +626,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
     }
 
     private void processJSONObjectList(List<JSONObject> jsonObjectList, Set<String> singleSet, Set<String> allSet,
-                                       Map<String, String> anchorOriginalMap, Map<String ,Integer> anchorCountMap){
+                                       Map<String, JSONObject> anchorOriginalMap){
         for(JSONObject value : jsonObjectList){
             String groupRecordName =value.getString("groupRecordName");
             allSet.add(groupRecordName);
@@ -634,11 +635,18 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             Matcher matcher = PatternUtil.ANCHOR_PATTERN.matcher(text);
             while(matcher.find()){
                 String anchor = matcher.group(1);
-                if(!anchorCountMap.containsKey(anchor)){
-                    anchorCountMap.put(anchor, 1);
-                    anchorOriginalMap.put(anchor, text);
+                if(!anchorOriginalMap.containsKey(anchor)){
+                    text = text.replaceAll("\n", "").replaceAll("\r", "");
+                    text = text.replaceAll("【【", "\n【【");
+                    JSONObject resultItem = new JSONObject();
+                    resultItem.put("原文", text);
+                    resultItem.put("锚点数量", AnchorUtil.countAnchorCount(text));
+                    resultItem.put("RID", value.getString("_id"));
+                    resultItem.put("出现次数", 1);
+                    anchorOriginalMap.put(anchor, resultItem);
                 }else{
-                    anchorCountMap.put(anchor, anchorCountMap.get(anchor) + 1);
+                    JSONObject jsonObject = anchorOriginalMap.get(anchor);
+                    jsonObject.put("出现次数", jsonObject.getInteger("出现次数") + 1);
                 }
             }
         }
@@ -678,10 +686,9 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         Set<String> groupRecordNameSet = new HashSet<>();
         Set<String> ruyuanSet =new HashSet<>();
         Set<String> chuyuanSet = new HashSet<>();
-        Map<String, String> anchorOriginalMap = new HashMap<>();
-        Map<String ,Integer> anchorCountMap = new HashMap<>();
-        processJSONObjectList(ruyuan, ruyuanSet, groupRecordNameSet, anchorOriginalMap, anchorCountMap);
-        processJSONObjectList(chuyuan, chuyuanSet, groupRecordNameSet, anchorOriginalMap, anchorCountMap);
+        Map<String, JSONObject> anchorOriginalMap = new HashMap<>();
+        processJSONObjectList(ruyuan, ruyuanSet, groupRecordNameSet, anchorOriginalMap);
+        processJSONObjectList(chuyuan, chuyuanSet, groupRecordNameSet, anchorOriginalMap);
         jsonObject.put("住院号总数", groupRecordNameSet.size());
         System.out.println(jsonObject);
         ruyuanSet.retainAll(chuyuanSet);
@@ -751,7 +758,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 .addCriteria(Criteria.where("deleted").is(false)), "Record"));
         //jsonObject.put("表格病历", jsonObject.getInteger("化验记录"));
         jsonObject.put("出入院未找到患者ID列表", notFoundSet);
-        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)", "xlsx", anchorOriginalMap, anchorCountMap, new String[]{"锚点", "数量", "原文"});
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)", "xlsx", new String[]{"锚点", "原文","锚点数量","RID","出现次数"}, anchorOriginalMap);
         writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单(mongo)", "xlsx", result, CommonConstant.RECORD_TYPE);
         return jsonObject;
     }
@@ -841,8 +848,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 
     }
 
-    public void writer(String path, String fileName,String fileType,Map<String, String> anchorOriginalMap,
-                              Map<String, Integer> anchorCountMap,String titleRow[]){
+    public void writer(String path, String fileName,String fileType,String titleRow[],Map<String, JSONObject> anchorOriginalMap){
         try{
 
             Workbook wb = null;
@@ -894,14 +900,14 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
             int rowIndex = 0;
             while(keys.hasNext()){
                 String key = keys.next();
-                String value = anchorOriginalMap.get(key);
+                JSONObject value = anchorOriginalMap.get(key);
                 row = sheet.createRow(++rowIndex);
                 cell = row.createCell(0);
                 cell.setCellValue(key);
-                cell = row.createCell(1);
-                cell.setCellValue(anchorCountMap.get(key));
-                cell = row.createCell(2);
-                cell.setCellValue(value.replaceAll("【【", "\n【【"));
+                for(int i = 1;i < titleRow.length;i++){
+                    cell = row.createCell(i);
+                    cell.setCellValue(value.getString(titleRow[i]));
+                }
             }
 
             //创建文件流

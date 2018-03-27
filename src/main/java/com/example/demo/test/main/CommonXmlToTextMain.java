@@ -283,7 +283,7 @@ public class CommonXmlToTextMain {
                             if(matcher.find()){
                                 String anchor = matcher.group(2);
                                 String text = matcher.group(4);
-                                text = StringUtil.removeAllBlank(text);
+                                //text = StringUtil.removeAllBlank(text);
                                 /*if(!fieldNotAnchorList.contains(anchor) ||
                                         (commonInfoFlag && commonInfoAnchorList.contains(anchor))) {*/
                                 if(commonInfoFlag || anchorList.contains(anchor)){
@@ -342,7 +342,7 @@ public class CommonXmlToTextMain {
                             Matcher matcher = PatternUtil.FIELDELEM_PATTERN.matcher(line);
                             if(matcher.find()) {
                                 String text = matcher.group(4);
-                                text = StringUtil.removeAllBlank(text);
+                                //text = StringUtil.removeAllBlank(text);
                                 stringBuilder.append(text);
                                 stringBuilder.append("\n");
                             }

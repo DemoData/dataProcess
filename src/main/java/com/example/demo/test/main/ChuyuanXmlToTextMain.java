@@ -58,7 +58,7 @@ public class ChuyuanXmlToTextMain {
         anchorList.add("营养会诊");
         anchorList.add("康复会诊");
         anchorList.add("病程签名");*/
-        anchorList.add("病程签名");
+        anchorList.add("病程签名");//手术记录锚点
     }
 
 
@@ -309,7 +309,7 @@ public class ChuyuanXmlToTextMain {
                         if(matcher.find()){
                             anchor = matcher.group(2);
                             text = matcher.group(4);
-                            text = StringUtil.removeAllBlank(text);
+                            //text = StringUtil.removeAllBlank(text);
                         }
                     }else if(line.startsWith("<section")){
                         Matcher matcher = PatternUtil.SECTION_PATTERN.matcher(line);
