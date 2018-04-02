@@ -49,10 +49,10 @@ public class BDZLMedicalHistoryDaoImpl extends BaseDao implements IMedicalHistor
 
     @Override
     public int batchUpdateContent(String dataSource, List<Object[]> params) {
-        synchronized (this) {
-            int[] result = getJdbcTemplate(dataSource).batchUpdate("update Record set content=? where id=?", params);
-            return result.length;
-        }
+//        synchronized (this) {
+        int[] result = getJdbcTemplate(dataSource).batchUpdate("update Record set content=? where id=?", params);
+        return result.length;
+//        }
     }
 
     @Override
@@ -68,38 +68,55 @@ public class BDZLMedicalHistoryDaoImpl extends BaseDao implements IMedicalHistor
         public MedicalHistory mapRow(ResultSet rs, int rowNum) throws SQLException {
             MedicalHistory medicalHistory = new MedicalHistory();
             medicalHistory.setId(rs.getInt("id"));
+            medicalHistory.setBedNo(rs.getString("RID"));
             medicalHistory.setGroupRecordName(rs.getString("groupRecordName"));
             medicalHistory.setPatientId(rs.getString("PID"));
-//            //用于获取所属类型
+            medicalHistory.setHospitalizedMode(rs.getString("UserID"));
+
+            //用于获取所属类型
             medicalHistory.setMedicalHistoryName(rs.getString("RecordType"));
-            Blob blobContent = rs.getBlob("BLNR");
-//            InputStream is = blobContent.getBinaryStream();
-//            ByteArrayInputStream bais = (ByteArrayInputStream)is;
-            /*byte[] byte_data = new byte[bais.available()]; //bais.available()返回此输入流的字节数
 
-            bais.read(byte_data, 0,byte_data.length);//将输入流中的内容读到指定的数组
-            note = new String(byte_data,"utf-8"); //再转为String，并使用指定的编码方式
-            is.close();*/
-            byte[] returnBytes = blobContent.getBytes(1, (int) blobContent.length());
-            StringBuffer content = new StringBuffer();
-            try {
-                String utfContent = null;
-                String gbkContent = null;
-                utfContent = new String(returnBytes, "UTF-8");
+            String dbContent = rs.getString("content");
+            //=============blob========
+            if (dbContent == null) {
+                Object blnr = rs.getObject("BLNR");
 
-                if (utfContent.indexOf("<elements>") > 0) {
-                    content.append(utfContent.substring(0, utfContent.indexOf("<elements>")));
+                Blob blobContent = null;
+                String strContent = null;
 
-                    gbkContent = new String(returnBytes, "GB2312");
-                    content.append(gbkContent.substring(gbkContent.indexOf("<elements>"), gbkContent.length()));
-                } else {
-                    content.append(utfContent);
+                if (blnr instanceof Blob) {
+                    blobContent = (Blob) blnr;
+                    byte[] returnBytes = blobContent.getBytes(1, (int) blobContent.length());
+                    StringBuffer content = new StringBuffer();
+                    try {
+                        String utfContent = null;
+                        String gbkContent = null;
+                        utfContent = new String(returnBytes, "UTF-8");
+
+                        if (utfContent.indexOf("<elements>") > 0) {
+                            content.append(utfContent.substring(0, utfContent.indexOf("<elements>")));
+
+                            gbkContent = new String(returnBytes, "GB2312");
+                            content.append(gbkContent.substring(gbkContent.indexOf("<elements>"), gbkContent.length()));
+                        } else {
+                            content.append(utfContent);
+                        }
+
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                    dbContent = content.toString();
                 }
 
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                if (blnr instanceof String) {
+                    strContent = (String) blnr;
+                    dbContent = strContent;
+                }
+
             }
-            medicalHistory.setMedicalContent(content.toString());
+            //========blob end===========
+            medicalHistory.setMedicalContent(dbContent);
+
             return medicalHistory;
         }
     }

@@ -10,7 +10,9 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @PropertySource("classpath:config/dao.properties")
@@ -41,30 +43,35 @@ public abstract class BaseDao extends GenericDao {
     protected JdbcTemplate sqlJdbcTemplate;
 
     @Autowired
+    @Qualifier(SqlServerDataSourceConfig.SQL_SERVER_FS_TEMPLATE)
+    protected JdbcTemplate fsJdbcTemplate;
+
+    @Autowired
+    @Qualifier(SqlServerDataSourceConfig.SQL_SERVER_FS_MZ_TEMPLATE)
+    protected JdbcTemplate fsmzJdbcTemplate;
+
+    @Autowired
     @Qualifier(MongoDataSourceConfig.HRS_MONGO_TEMPLATE)
     protected MongoTemplate hrsMongoTemplate;
 
+    protected static Map<String, JdbcTemplate> jdbcTemplatePool = new HashMap<>();
 
     protected JdbcTemplate getJdbcTemplate(String dataSource) {
-        if (MysqlDataSourceConfig.MYSQL_JKCT_DATASOURCE.equals(dataSource)) {
-            return jkctJdbcTemplate;
+        if (jdbcTemplatePool.isEmpty()) {
+            initialJdbcPool();
         }
-        if (MysqlDataSourceConfig.MYSQL_YXZW_DATASOURCE.equals(dataSource)) {
-            return yxzwJdbcTemplate;
-        }
-        if (MysqlDataSourceConfig.MYSQL_TNB_DATASOURCE.equals(dataSource)) {
-            return tnbJdbcTemplate;
-        }
-        if (MysqlDataSourceConfig.MYSQL_YX_DATASOURCE.equals(dataSource)) {
-            return yxJdbcTemplate;
-        }
-        if (MysqlDataSourceConfig.MYSQL_XZDM_DATASOURCE.equals(dataSource)) {
-            return xzdmJdbcTemplate;
-        }
-        if (SqlServerDataSourceConfig.SQL_SERVER_DATASOURCE.equals(dataSource)) {
-            return sqlJdbcTemplate;
-        }
-        return jkctJdbcTemplate;
+        return jdbcTemplatePool.get(dataSource);
+    }
+
+    private void initialJdbcPool() {
+        jdbcTemplatePool.put(MysqlDataSourceConfig.MYSQL_JKCT_DATASOURCE, jkctJdbcTemplate);
+        jdbcTemplatePool.put(MysqlDataSourceConfig.MYSQL_YXZW_DATASOURCE, yxzwJdbcTemplate);
+        jdbcTemplatePool.put(MysqlDataSourceConfig.MYSQL_TNB_DATASOURCE, tnbJdbcTemplate);
+        jdbcTemplatePool.put(MysqlDataSourceConfig.MYSQL_YX_DATASOURCE, yxJdbcTemplate);
+        jdbcTemplatePool.put(MysqlDataSourceConfig.MYSQL_XZDM_DATASOURCE, xzdmJdbcTemplate);
+        jdbcTemplatePool.put(SqlServerDataSourceConfig.SQL_SERVER_DATASOURCE, sqlJdbcTemplate);
+        jdbcTemplatePool.put(SqlServerDataSourceConfig.SQL_SERVER_FS_DATASOURCE, fsJdbcTemplate);
+        jdbcTemplatePool.put(SqlServerDataSourceConfig.SQL_SERVER_FS_MZ_DATASOURCE, fsmzJdbcTemplate);
     }
 
     protected List<String> findOrgOdCatByGroupRecordName(String sql, String dataSource, String groupRecordName) {

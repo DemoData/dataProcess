@@ -12,7 +12,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -28,7 +27,7 @@ public class PatientDaoImpl extends BaseDao implements IPatientDao {
     public List<Patient> findPatients(String dataSource, int pageNum, int pageSize) {
         log.info(">>>>>>>>>>>Searching patients from : " + dataSource + "<<<<<<<<<<<<<<<");
         JdbcTemplate jdbcTemplate = getJdbcTemplate(dataSource);
-        if (SqlServerDataSourceConfig.SQL_SERVER_DATASOURCE.equals(dataSource)) {
+        if (dataSource.contains(SqlServerDataSourceConfig.SQL_SERVER)) {
             return super.queryForListInSqlServer(jdbcTemplate, pageNum, pageSize, "Patient", null, null);
         }
         return super.queryForList(jdbcTemplate, pageNum, pageSize);
@@ -43,18 +42,31 @@ public class PatientDaoImpl extends BaseDao implements IPatientDao {
     }
 
     @Override
-    public void batchInsert2HRS(List<JSONObject> records, String collectionName) {
+    public void batchInsert2HRS(List<JSONObject> records) {
         synchronized (this) {
-            hrsMongoTemplate.insert(records, collectionName);
+            hrsMongoTemplate.insert(records, "Patient");
+        }
+    }
+
+    @Override
+    public void save2HRS(JSONObject patient) {
+        synchronized (this) {
+            hrsMongoTemplate.insert(patient, "Patient");
         }
     }
 
     @Override
     public Integer getCount(String dataSource) {
-        if (SqlServerDataSourceConfig.SQL_SERVER_DATASOURCE.equals(dataSource)) {
-            return getJdbcTemplate(dataSource).queryForObject("select count(t.id) from Patient t", Integer.class);
+        if (dataSource == null) {
+            return 0;
         }
-        return getJdbcTemplate(dataSource).queryForObject("select count(t.病人ID号) from `患者基本信息` t", Integer.class);
+        String sql = null;
+        if (dataSource.contains(SqlServerDataSourceConfig.SQL_SERVER)) {
+            sql = "select count(t.id) from Patient t";
+        } else {
+            sql = "select count(t.病人ID号) from `患者基本信息` t";
+        }
+        return getJdbcTemplate(dataSource).queryForObject(sql, Integer.class);
     }
 
     @Override
@@ -82,9 +94,11 @@ public class PatientDaoImpl extends BaseDao implements IPatientDao {
 
             patient.setId(rs.getInt("id"));
             patient.setName(rs.getString("Name"));
-            patient.setPatientId("bdsz_" + rs.getString("PID"));
-            Date birthYear = rs.getDate("Birthyear");
+            patient.setPatientId(rs.getString("PID"));
+
+            Object birthYear = rs.getObject("Birthyear");
             patient.setBirthDay(birthYear == null ? "" : birthYear.toString().substring(0, 10));
+
             patient.setOrigin(rs.getString("Origin"));
             patient.setMarriage(rs.getString("Marriage"));
             patient.setAddress(rs.getString("Address"));

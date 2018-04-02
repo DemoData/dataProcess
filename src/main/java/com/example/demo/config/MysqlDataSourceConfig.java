@@ -16,19 +16,23 @@ import javax.sql.DataSource;
 public class MysqlDataSourceConfig {
 
     public static final String MYSQL_YXZW_PREFIX = "mysql.yixianzhanwei";
-    public static final String MYSQL_YXZW_DATASOURCE = "yxzwDataSource";
+    public static final String MYSQL_YXZW_DATASOURCE = "mysql.yxzwDataSource";
     public static final String MYSQL_YXZW_TEMPLATE = "yxzwJdbcTemplate";
+
     public static final String MYSQL_JKCT_PREFIX = "mysql.jiankangchati";
-    public static final String MYSQL_JKCT_DATASOURCE = "jkctDataSource";
+    public static final String MYSQL_JKCT_DATASOURCE = "mysql.jkctDataSource";
     public static final String MYSQL_JKCT_TEMPLATE = "jkctJdbcTemplate";
+
     public static final String MYSQL_TNB_PREFIX = "mysql.tangniaobingxiangguan";
-    public static final String MYSQL_TNB_DATASOURCE = "tnbDataSource";
+    public static final String MYSQL_TNB_DATASOURCE = "mysql.tnbDataSource";
     public static final String MYSQL_TNB_TEMPLATE = "tnbJdbcTemplate";
+
     public static final String MYSQL_YX_PREFIX = "mysql.yixianxiangguan";
-    public static final String MYSQL_YX_DATASOURCE = "yxDataSource";
+    public static final String MYSQL_YX_DATASOURCE = "mysql.yxDataSource";
     public static final String MYSQL_YX_TEMPLATE = "yxJdbcTemplate";
+
     public static final String MYSQL_XZDM_PREFIX = "mysql.xiazhidongmaixiangguan";
-    public static final String MYSQL_XZDM_DATASOURCE = "xzdmDataSource";
+    public static final String MYSQL_XZDM_DATASOURCE = "mysql.xzdmDataSource";
     public static final String MYSQL_XZDM_TEMPLATE = "xzdmJdbcTemplate";
 
     @Primary
@@ -38,7 +42,6 @@ public class MysqlDataSourceConfig {
     public DataSource yxzwDataSource() {
         return DataSourceBuilder.create().build();
     }
-
 
     @Bean(name = MYSQL_JKCT_DATASOURCE)
     @Qualifier(MYSQL_JKCT_DATASOURCE)

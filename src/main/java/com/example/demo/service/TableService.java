@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo.common.constant.CommonConstant;
 import com.example.demo.dao.TableDao;
 import com.example.demo.entity.Record;
 import lombok.extern.slf4j.Slf4j;
@@ -28,19 +29,24 @@ public abstract class TableService<T> extends BaseService {
                 continue;
             }
             List<Record> orderList = currentDao().findRecord(dataSource, startPage, getPageSize());
-            if (orderList != null && orderList.size() < getPageSize()) {
-                isFinish = true;
-            }
             if (orderList == null || orderList.isEmpty()) {
-                continue;
+                log.info("runStart(): record is 0");
+                break;
+            }
+            //orderList.size() > getPageSize() 如果结果数据大于指定数量，则不分页处理
+            if ((orderList != null && orderList.size() < getPageSize()) || orderList.size() > getPageSize()) {
+                isFinish = true;
             }
             List<JSONObject> jsonList = new ArrayList<>();
             //遍历record
             for (Record record : orderList) {
+                record.setOdCategories(new String[]{getOdCategory(dataSource)});
+                record.setOrgOdCategories(new String[]{CommonConstant.EMPTY_FLAG});
+
                 initRecordBasicInfo(record);
+
                 customProcess(record, orgOdCatCaches, patientCaches, dataSource);
 
-                record.setOdCategories(new String[]{getOdCategory(dataSource)});
                 //查找医嘱通过patientId
                 initInfoArray(record, currentDao().findArrayListByCondition(dataSource, getArrayCondition(record)));
 
@@ -53,6 +59,7 @@ public abstract class TableService<T> extends BaseService {
             if (orgOdCatCaches.size() > 50000) {
                 orgOdCatCaches.clear();
             }
+            postProcess(jsonList,orgOdCatCaches, patientCaches, dataSource);
             count += jsonList.size();
             log.info("inserting record total count: " + jsonList.size());
             //把找到的record插入到mongodb hrs record中
@@ -60,6 +67,9 @@ public abstract class TableService<T> extends BaseService {
             pageNum++;
         }
         log.info(">>>>>>>>>>>total inserted records: " + count + " from " + dataSource);
+    }
+
+    protected void postProcess(List<JSONObject> jsonList, Map<String, List<String>> orgOdCatCaches, Map<String, String> patientCaches, String dataSource) {
     }
 
     protected abstract String getArrayCondition(Record record);

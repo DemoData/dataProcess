@@ -22,7 +22,21 @@ public class StringUtil {
     public static String trim(String s){
         String result = "";
         if(null!=s && !"".equals(s)){
-            result = s.replaceAll("^[　*| *| *|//s*]*", "").replaceAll("[　*| *| *|//s*]*$", "");
+            result = s.replaceAll("^[　*| *| *|\\s*]*", "").replaceAll("[　*| *| *|\\s*]*$", "");
+        }
+        return result;
+    }
+
+    /**
+     * 替換字符串中所包含的空格、回车、换行符、制表符
+     *
+     * @param source
+     * @return
+     */
+    public static String replaceBlank(String source, String replaceStr) {
+        String result = "";
+        if (null != source && !"".equals(source)) {
+            result = source.replaceAll("\\s*|\\t|\\r|\\n", replaceStr);
         }
         return result;
     }

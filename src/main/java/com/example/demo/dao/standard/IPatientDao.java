@@ -14,7 +14,9 @@ public interface IPatientDao {
 
     List<Patient> findPatients(String dataSource, int pageNum, int pageSize);
 
-    void batchInsert2HRS(List<JSONObject> records, String collectionName);
+    void batchInsert2HRS(List<JSONObject> records);
+
+    void save2HRS(JSONObject patient);
 
     Integer getCount(String dataSource);
 

@@ -25,11 +25,11 @@ public class BDZLInspectionServiceImpl extends TextService<Inspection> {
 
     @Autowired
     @Qualifier("bdzlInspectionDao")
-    private IInspectionDao inspectionFSDao;
+    private IInspectionDao inspectionDao;
 
     @Override
     protected TextDao<Inspection> currentDao() {
-        return inspectionFSDao;
+        return inspectionDao;
     }
 
     @Override
@@ -40,11 +40,12 @@ public class BDZLInspectionServiceImpl extends TextService<Inspection> {
         }
         //如果cache中已近存在就不在重复查找
         if (orgOdCatCaches.isEmpty() || StringUtils.isEmpty(orgOdCatCaches.get(groupRecordName))) {
-            List<String> orgOdCategories = inspectionFSDao.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
+            List<String> orgOdCategories = inspectionDao.findOrgOdCatByGroupRecordName(dataSource, groupRecordName);
             orgOdCatCaches.put(groupRecordName, orgOdCategories);
         }
 
         record.setOrgOdCategories(orgOdCatCaches.get(groupRecordName).toArray(new String[0]));
+        record.setOdCategories(new String[]{"肿瘤"});
     }
 
     @Override
@@ -66,10 +67,10 @@ public class BDZLInspectionServiceImpl extends TextService<Inspection> {
     protected void initRecordBasicInfo(Record record, Inspection inspection) {
         record.setHospitalId("57b1e211d897cd373ec76dc6");
         record.setBatchNo("bdsz20180320");
-        record.setDepartment("肿瘤科");
+        record.setDepartment("肿瘤内科");
         record.setFormat("text");
         record.setDeleted(false);
-        record.setSource("采集入库");
+        record.setSource("检查");
         record.setStatus("AMD识别完成");
         record.setRecordType("检查记录");
         record.setSubRecordType("检查");
