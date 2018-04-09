@@ -51,4 +51,9 @@ public class MedicalContentSplitController {
     public JSONObject mongoPandian(@RequestParam String batchNo){
         return iMedicalContentSplitService.mongoPandian(batchNo);
     }
+
+    @GetMapping("menMongoPandian")
+    public void menMongoPandian(@RequestParam String batchNo){
+        iMedicalContentSplitService.menzhenMongoPandian(batchNo);
+    }
 }

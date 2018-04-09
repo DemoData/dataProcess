@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RandomMain {
     /*static MongoCredential mongoCredential = MongoCredential.createCredential("yy", "HRS-live", "rf1)Rauwu3dpsGid".toCharArray());
@@ -43,7 +44,7 @@ public class RandomMain {
     static MongoClient mongo = new MongoClient(serverAddress, mongoCredentials, new MongoClientOptions.Builder().build());
     //static MongoClient mongo = new MongoClient("localhost", 27017);
     static MongoDatabase db = mongo.getDatabase("HRS-live");*/
-    static MongoCredential mongoCredential = MongoCredential.createCredential("xh", "HRS-test", "rt0hizu{j9lzJNqi".toCharArray());
+    static MongoCredential mongoCredential = MongoCredential.createCredential("xh", "HRS-live", "rt0hizu{j9lzJNqi".toCharArray());
 
     static ServerAddress serverAddress = new ServerAddress("localhost", 3718);
 
@@ -54,7 +55,7 @@ public class RandomMain {
     //static ServerAddress serverAddress = new ServerAddress("localhost", 27017);
     static MongoClient mongo = new MongoClient(serverAddress, mongoCredentials, new MongoClientOptions.Builder().build());
     //static MongoClient mongo = new MongoClient("localhost", 27017);
-    static MongoDatabase db = mongo.getDatabase("HRS-test");
+    static MongoDatabase db = mongo.getDatabase("HRS-live");
     static MongoCollection dc = db.getCollection("Record");
     static List<JSONObject> result = new ArrayList<>();
     public final static String ANCHOR_EXCEL_PATH = "/Users/liulun/Desktop/上海长海医院/技术用-症状&体征-锚点使用.xlsx";
@@ -81,11 +82,15 @@ public class RandomMain {
 
 
     public static void imRecord() throws Exception {
-        String[] recordArr = new String[]{"入院记录", "出院记录"};
+        String[] recordArr = new String[]{"手术操作记录"};
         for(int i = 0; i < recordArr.length; i++){
             System.out.println(recordArr[i]);
             List<Bson> bsons = new ArrayList<>();
-            bsons.add(new Document("$match", new Document("batchNo", "shch20180327")));
+            bsons.add(new Document("$match", new Document("batchNo", "shch20180309")));
+            //北大肿瘤需要
+            //bsons.add(new Document("$match", new Document("odCategories", "肿瘤")));
+            /*Pattern pattern = Pattern.compile("^.*【【主任医师】】.*$", Pattern.CASE_INSENSITIVE);
+            bsons.add(new Document("$regex", new Document("info.text", pattern)));*/
             List<Document> recordTypeList = new ArrayList<Document>();
             recordTypeList.add(new Document("recordType", recordArr[i]));
             //recordTypeList.add(new Document("recordType", "出院记录"));
@@ -105,9 +110,11 @@ public class RandomMain {
 
     }
 
+
     private static JSONObject processJSONObject(JSONObject jsonObject) throws Exception{
         String textARS = jsonObject.getJSONObject("info").getString("textARS");
-        String text = TextFormatter.addAnchor(textARS, anchors);
+        //String text = TextFormatter.addAnchor(textARS, anchors);
+        String text = jsonObject.getJSONObject("info").getString("text");
         text = text.replaceAll("\n", "").replaceAll("\r", "");
         text = text.replaceAll("【【", "\n【【");
         JSONObject resultItem = new JSONObject();

@@ -22,6 +22,7 @@ public class SplitAnchor {
 
         //notNeed.add("性别");
         //notNeed.add("年龄");
+        notNeed.add("体格检查");
     }
     private static List<String> need = new ArrayList<>();
     static {
@@ -197,8 +198,8 @@ public class SplitAnchor {
                     if(!notNeed.contains(anchor)){
                         isStandardAnchor = false;
                     }
-                    //if (anchor.length() <= 2 && !isStandardAnchor || need.contains(anchor)){
-                    if (!isStandardAnchor || need.contains(anchor)){
+                    if (anchor.length() <= 2 && !isStandardAnchor || need.contains(anchor)){
+                    //if (!isStandardAnchor || need.contains(anchor)){
                         //2个字内的锚点必须后续有冒号
                         if (!(line.line.length() > index + anchor.length() && (line.line.charAt(index + anchor.length()) == '：'
                                 || line.line.charAt(index + anchor.length()) == '】' || line.line.charAt(index + anchor.length()) == ':'

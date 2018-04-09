@@ -18,4 +18,6 @@ public interface IMedicalContentSplitService {
     JSONObject pandian();
 
     JSONObject mongoPandian(String batchNo);
+
+    void menzhenMongoPandian(String batchNo);
 }

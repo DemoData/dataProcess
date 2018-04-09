@@ -250,9 +250,6 @@ public class XmlToTextMain {
             boolean commonInfoFlag = false;
             for(int i = 0; i < fileList.size(); i++){
                 File file = fileList.get(i);
-                if("P02686677_1_716139_入院记录00010010.xml".equals(file.getName())){
-                    System.out.println(file.getName());
-                }
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "GBK"));
                 String line;
                 StringBuilder stringBuilder = new StringBuilder();
@@ -272,7 +269,7 @@ public class XmlToTextMain {
                             if((textAnchorList.contains(text) || textAnchorList.contains(anchor))){
                                 stringBuilder.append("【【");
                                 text = text.replaceAll(":", "：");
-                                if(text.startsWith("。") || text.startsWith(",") || text.startsWith("，")){
+                                if(text.startsWith("。") || text.startsWith(",") || text.startsWith("，") || text.startsWith("：")){
                                     text = text.substring(1);
                                 }
                                 if(text.contains("：")){

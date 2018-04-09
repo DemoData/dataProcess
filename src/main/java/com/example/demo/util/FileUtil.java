@@ -68,6 +68,18 @@ public class FileUtil {
         return stringBuilder.toString();
     }
 
+    public static String readFile(File file, String charSet) throws Exception{
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charSet));
+        String line;
+        StringBuilder stringBuilder = new StringBuilder();
+        while ((line = bufferedReader.readLine()) != null) {
+            stringBuilder.append(line);
+            //stringBuilder.append("\n");
+        }
+        bufferedReader.close();
+        return stringBuilder.toString();
+    }
+
     public static void main(String[] args) {
         Map<String, List<String>> result = listTypeFileNameMap("/Users/liulun/Desktop/上海长海医院/血管外科/血管外科下肢动脉相关_20180210_1");
         for(String key : result.keySet()){

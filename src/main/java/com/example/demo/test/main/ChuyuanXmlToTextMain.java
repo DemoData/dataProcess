@@ -31,7 +31,7 @@ public class ChuyuanXmlToTextMain {
 
     private static List<String> dirArr = new ArrayList<>();
     static {
-        dirArr.add("手术记录");
+        dirArr.add("出院小结");
         //dirArr.add("入院记录");
         /*dirArr.add("病程记录");
         dirArr.add("出院小结");
@@ -54,11 +54,11 @@ public class ChuyuanXmlToTextMain {
 
     static {
         //出院锚点
-        /*anchorList.add("诊断签名");
+        anchorList.add("诊断签名");
         anchorList.add("营养会诊");
         anchorList.add("康复会诊");
-        anchorList.add("病程签名");*/
-        anchorList.add("病程签名");//手术记录锚点
+        anchorList.add("病程签名");
+        //anchorList.add("病程签名");//手术记录锚点
     }
 
 
@@ -288,9 +288,6 @@ public class ChuyuanXmlToTextMain {
             boolean commonInfoFlag = false;
             for(int i = 0; i < fileList.size(); i++){
                 File file = fileList.get(i);
-                if("00017824_1_720337_出院小结00010020.xml".equals(file.getName())){
-                    System.out.println(file.getName());
-                }
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "GBK"));
                 String line;
                 StringBuilder stringBuilder = new StringBuilder();

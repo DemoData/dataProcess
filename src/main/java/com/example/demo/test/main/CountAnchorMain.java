@@ -15,7 +15,7 @@ public class CountAnchorMain {
 
     private static List<String> dirArr = new ArrayList<>();
     static {
-        dirArr.add("手术记录");
+        dirArr.add("入院记录");
         //dirArr.add("入院记录");
         /*dirArr.add("病程记录");
         dirArr.add("出院小结");

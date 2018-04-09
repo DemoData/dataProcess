@@ -17,10 +17,12 @@ public class CommonConstant {
     public static final String TNB = "tnb";
     public static final String JKCT = "jkct";
     public static final String YXZW = "yxzw";
+    public static final String GANAI = "ganai";
     public static final String EMPTY_FLAG = "";
     public static final String[] RECORD_TYPE = new String[]{"PID", "入院记录", "出院记录","化验记录","检查记录_表格",
-            "检查记录_文本","手术操作记录", "治疗方案", "门诊记录", "其他记录", "病理"};
+            "检查记录_文本","手术操作记录", "治疗方案", "门诊记录","病理", "其他记录"};
     public static final int RANDOM_SIZE = 10;
     public static final String ZHAN_WEI_FU = "占位符";
     public static final String EXCEL_SEPARATOR = "#&#";
+    public static final String MYSQL_SEPARATOR = "#$#";
 }

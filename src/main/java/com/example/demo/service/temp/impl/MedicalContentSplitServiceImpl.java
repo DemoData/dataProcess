@@ -32,6 +32,7 @@ import org.springframework.util.StringUtils;
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class MedicalContentSplitServiceImpl implements IMedicalContentSplitService{
@@ -367,11 +368,12 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 //            for(MedicalContentSplitModel medicalContentSplitModel : updateResult){
 //                fileWriter.write(medicalContentSplitModel.getCreateDate() + "$#$" + medicalContentSplitModel.getVisitNumber() + "$#$" + medicalContentSplitModel.getMedicalContent() + "\n");
 //            }
-            int result = forbidDatabase(forbidList);
+            /*int result = forbidDatabase(forbidList);
             fileWriter.write("禁用:" + result + "\n");
             result = updateDatabase(updateResult);
             fileWriter.write("更新:" + result + "\n");
-            addDatabase(addList);
+            addDatabase(addList);*/
+            fileWriter.flush();
             fileWriter.close();
             System.out.println("medicalNameNotMatchCount:" + medicalNameNotMatchCount);
             System.out.println("notMatchCount:" + notMatchCount);
@@ -643,6 +645,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                     resultItem.put("锚点数量", AnchorUtil.countAnchorCount(text));
                     resultItem.put("RID", value.getString("_id"));
                     resultItem.put("出现次数", 1);
+                    resultItem.put("记录类型", value.getString("recordType"));
                     anchorOriginalMap.put(anchor, resultItem);
                 }else{
                     JSONObject jsonObject = anchorOriginalMap.get(anchor);
@@ -669,6 +672,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
         fieldObject.put("patientId", true);
         fieldObject.put("groupRecordName", true);
         fieldObject.put("info.text", true);
+        fieldObject.put("recordType", true);
         Query ruyuanQuery = new BasicQuery(dbObject, fieldObject);
         List<JSONObject> ruyuan = pandianDao.findListByQuery(ruyuanQuery, "Record");
         jsonObject.put("入院记录", ruyuan.size());
@@ -758,9 +762,42 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 .addCriteria(Criteria.where("deleted").is(false)), "Record"));
         //jsonObject.put("表格病历", jsonObject.getInteger("化验记录"));
         jsonObject.put("出入院未找到患者ID列表", notFoundSet);
-        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)", "xlsx", new String[]{"锚点", "原文","锚点数量","RID","出现次数"}, anchorOriginalMap);
-        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单(mongo)", "xlsx", result, CommonConstant.RECORD_TYPE);
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "锚点原文对应表(mongo)" + batchNo, "xlsx", new String[]{"锚点","出现次数", "原文","记录类型","锚点数量","RID"}, anchorOriginalMap);
+        System.out.println("输出文件");
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "住院详单(mongo)" + batchNo, "xlsx", result, CommonConstant.RECORD_TYPE);
         return jsonObject;
+    }
+
+    @Override
+    public void menzhenMongoPandian(String batchNo) {
+        DBObject dbObject = new BasicDBObject();
+        dbObject.put("batchNo", batchNo);
+        Pattern pattern = Pattern.compile("^.*门诊.*$", Pattern.MULTILINE);
+        dbObject.put("source", new BasicDBObject("$regex", pattern));
+        dbObject.put("deleted", false);
+        DBObject fieldObject = new BasicDBObject();
+        fieldObject.put("patientId", true);
+        fieldObject.put("source", true);
+        System.out.println(pandianDao.findCountByQuery(new BasicQuery(dbObject, fieldObject), "Record"));
+        List<JSONObject> resultJsonObject = pandianDao.findListByQuery(new BasicQuery(dbObject, fieldObject), "Record");
+        Set<String> sourceSet = new HashSet<>();
+        Map<String, Map<String, Integer>> patientSourceCountMap = new HashMap<>();
+        for(JSONObject jsonObject : resultJsonObject){
+            String patientId = jsonObject.getString("patientId");
+            String source = jsonObject.getString("source");
+            if(!sourceSet.contains(source)){
+                sourceSet.add(source);
+            }
+            if(!patientSourceCountMap.containsKey(patientId)){
+                patientSourceCountMap.put(patientId, new HashMap<>());
+            }
+            Map<String, Integer> sourceCountMap = patientSourceCountMap.get(patientId);
+            if(!sourceCountMap.containsKey(source)){
+                sourceCountMap.put(source, 0);
+            }
+            sourceCountMap.put(source, sourceCountMap.get(source) + 1);
+        }
+        writer("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾", "门诊详单(mongo)" + batchNo, "xlsx", patientSourceCountMap, sourceSet);
     }
 
     private Integer[] initArr(int length){
@@ -833,6 +870,79 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
                 for(int i = 0; i < arr.length; i++){
                     cell = row.createCell(i + 1);
                     cell.setCellValue(arr[i]);
+                }
+            }
+
+            //创建文件流
+            OutputStream stream = new FileOutputStream(excelPath);
+            //写入数据
+            wb.write(stream);
+            //关闭文件流
+            stream.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+    }
+
+    private void writer(String path, String fileName,String fileType,Map<String, Map<String, Integer>> result,Set titleSet) {
+        try{
+            Workbook wb = null;
+            String excelPath = path+File.separator+fileName+"."+fileType;
+            File file = new File(excelPath);
+            Sheet sheet =null;
+            //创建工作文档对象
+            if (!file.exists()) {
+                if (fileType.equals("xls")) {
+                    wb = new HSSFWorkbook();
+
+                } else if(fileType.equals("xlsx")) {
+
+                    wb = new XSSFWorkbook();
+                } else {
+                    throw new RuntimeException("文件格式不正确");
+                }
+                //创建sheet对象
+                sheet = (Sheet) wb.createSheet("门诊详单");
+                OutputStream outputStream = new FileOutputStream(excelPath);
+                wb.write(outputStream);
+                outputStream.flush();
+                outputStream.close();
+
+            } else {
+                if (fileType.equals("xls")) {
+                    wb = new HSSFWorkbook();
+
+                } else if(fileType.equals("xlsx")) {
+                    wb = new XSSFWorkbook();
+
+                } else {
+                    throw new RuntimeException("文件格式不正确");
+                }
+            }
+            //创建sheet对象
+            if (sheet==null) {
+                sheet = (Sheet) wb.createSheet("门诊详单");
+            }
+
+            //添加表头
+            Row row = sheet.createRow(0);
+            Cell cell = row.createCell(0);
+            cell.setCellValue("PID");
+            Object[] titleRow = titleSet.toArray();
+            for(int i = 0;i < titleRow.length;i++){
+                cell = row.createCell(i + 1);
+                cell.setCellValue((String)titleRow[i]);
+            }
+            int rowIndex = 0;
+            for(String key : result.keySet()){
+                row = sheet.createRow(++rowIndex);
+                cell = row.createCell(0);
+                cell.setCellValue(key);
+                Map<String, Integer> sourceCountMap = result.get(key);
+                for(int i = 0;i < titleRow.length;i++){
+                    cell = row.createCell(i + 1);
+                    cell.setCellValue(sourceCountMap.get((String)titleRow[i]) == null ? 0 : sourceCountMap.get((String)titleRow[i]));
                 }
             }
 
@@ -976,7 +1086,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
     public static List<Map<String, Object>> excelParse(String filePath, List<String> headList, String fileName) throws Exception{
         System.out.println(fileName);
         if(StringUtils.isEmpty(filePath)){
-            filePath = "/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾/检验明细";
+            filePath = "/Users/liulun/Desktop/上海长海医院/肝癌/检验报告";
         }
         File file = new File(filePath + "/" + fileName);
         XSSFWorkbook xssfWorkbook = new XSSFWorkbook(file);
@@ -1040,16 +1150,20 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 
     public static void main(String[] args) throws Exception{
         /*try{
+            String path = "/Users/liulun/Desktop/上海长海医院/肝癌/检验报告";
             List<String> headList = new ArrayList<>();
-            File loadData = new File("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾/loadData.txt");
+            File loadData = new File("/Users/liulun/Desktop/上海长海医院/肝癌/loadData.txt");
             if(!loadData.exists()){
                 loadData.createNewFile();
             }
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(loadData));
-            File   file =  new File("/Users/liulun/Desktop/上海长海医院/检验科/胰腺相关组/长海检验科-王蓓蕾-临床病历/王蓓蕾/检验明细");
+            File   file =  new File(path);
             File[] childFileArr = file.listFiles();
             for(File childFile : childFileArr){
-                List<Map<String, Object>> result = excelParse(null, headList, childFile.getName());
+                if(".DS_Store".equals(childFile.getName())){
+                    continue;
+                }
+                List<Map<String, Object>> result = excelParse(path, headList, childFile.getName());
                 for(int i = 0; i < result.size(); i++){
                     StringBuilder sb = new StringBuilder();
                     Map<String, Object> data = result.get(i);
@@ -1115,7 +1229,7 @@ public class MedicalContentSplitServiceImpl implements IMedicalContentSplitServi
 
         }
         System.out.println(sb.toString());*/
-        String medicalContent = "2016-03-11 10:20            　　首次病程记录  　胡维银，男，90岁，已婚，汉族，上海杨浦区人，家住上海市杨浦区嫩江路863号907室。因“双下肢静息痛2个月”门诊拟“下肢动脉硬化闭塞症”于2016-03-11收入我科。病例特点：1、老年男，慢性起病，治疗史明确，病程较长。2、患者于2个月前无明显诱因逐渐出现双下肢静息痛。无法下地行走，感双下肢发冷，无破溃、坏疽。其他疾病情况：高血压、糖尿病病史30余年。服药情况：阿司匹林肠溶片、硝苯地平控释片、依帕司他片、阿卡波糖片、瑞格列奈片、培元通脑胶囊、门冬胰岛素30注射液。3、查体：T 36.0℃，P 80bpm，R 20bpm，BP 138／80mmHg。双下肢无畸形，双足皮肤色泽发绀，双下肢皮温低。双侧足背动脉未触及，右侧胫后动脉弱，左侧胫后动脉未触及，双侧股动脉搏正常。双下肢感觉功能未见明显异常，活动可。双侧桡动脉、颈动脉搏动无明显异常。4、辅助检查：2016-3-1来我院就诊，门诊行双下肢彩超示1.双侧股动脉内膜增厚毛糙，伴多发斑块形成；2.双侧股动脉、腘动脉不全性闭塞，双侧股浅动脉闭塞。深静脉血栓评估：(1-2分)低危    　　　       根据上述病史特点：初步诊断：1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压诊断依据：下肢动脉硬化闭塞症（静息痛期）诊断依据：因双下肢静息痛2个月入院。查体双下肢缺血表现明显。糖尿病诊断依据：糖尿病病史30余年，胰岛素皮下注射控制血糖。高血压诊断依据：高血压病史30余年，长期服用降压药物控制血压。鉴别诊断：１、血栓闭塞性脉管炎（TAO）：多见于青壮年男性，病因尚未明确，常有吸烟及受凉史，病变多累及双侧下肢中小动脉，常伴有游走性浅静脉炎。患者为老年男性，病变动脉为主干，与血栓闭塞性脉管炎不符。 2、急性动脉栓塞：多急性起病且进展迅速。多源自于心脏源性栓子，患者多伴随有房颤，且未规律华发林化。行下肢动脉造影（ＣＴＡ、ＭＲＡ、ＤＳＡ）或彩超可明确。诊疗计划：１.检查安排：完善三大常规、肝肾功能、凝血、下肢动脉CTA，心脏彩超、心电图及胸片等检查。２.治疗计划：继续控制血压、血糖，排除手术禁忌，择期行双下肢PTA+支架成形术。本病例按照临床路径计划实施：是３.预期的治疗结果：缓解病程进程、减轻病人痛苦 ４.预计住院时间：7天。５.预计治疗费用：70000元（以实际发生费用为准）。袁良喜/李强2016-03-12 08:08　　　　　袁良喜主治医师首次查房记录    今日袁良喜主治医师查房：补充的病史和体征：无。今日患者一般情况可，生命体征：体温36.5℃，脉搏76次／分，呼吸18次／分，血压142／80mmHg，神志清，精神可，睡眠可，饮食可，大小便正常。主治医师查房后指出：主治医师48小时诊断：1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。诊断依据：　　下肢动脉硬化闭塞症（静息痛期） 诊断依据：下肢缺血症状明显，双下肢皮温低，足背动脉搏动未及。　　糖尿病诊断依据：病史30余年，皮下注射胰岛素及口服降糖药物治疗。　　  高血压诊断依据：病史30余年，口服降压药控制血压。鉴别诊断：1、急性动脉栓塞：多急性起病且进展迅速。多源自于心脏源性栓子，患者多伴随有房颤，且未规律华发林化。行下肢动脉造影（ＣＴＡ、ＭＲＡ、ＤＳＡ）或彩超可明确。   2、腰椎间盘突出症、椎管狭窄等：也可表现为行走后下肢疼痛，多由弯腰等活动所致，行走距离可变，下肢动脉搏动可触及，与本例不符。治疗计划：完善必要的辅助检查，排除手术禁忌，择期行下肢PTA备支架成形术。袁良喜/李强2016-03-13 08:59　　　　　包俊敏主诊医师首次查房记录   今日包俊敏主诊医师查房后分析病情如下：补充的病史和体征：无。查体：双下肢无畸形，双足皮肤色泽发绀，双下肢皮温低。双侧足背动脉未触及，右侧胫后动脉弱，左侧胫后动脉未触及，双侧股动脉搏正常。双下肢感觉功能未见明显异常，活动可。双侧桡动脉、颈动脉搏动无明显异常。颈动脉、椎动脉彩超示右侧颈内动脉闭塞。今日患者一般情况可，生命体征：体温36℃，脉搏80次／分，呼吸18次／分，血压110／70mmHg，神志清，精神可，睡眠可，饮食可，大小便正常。诊断、病情、治疗方法分析讨论：患者目前诊断为1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。合并有右侧颈内动脉闭塞，有手术指征，向家属讲明，择期予以手术。注意事项：待双下肢CTA结果，择期手术。袁良喜/李强2016-03-15 11:11　　　　　术前小结简要病情：患者胡维银，男，90岁，已婚，汉族，上海杨浦区人。因“双下肢静息痛2个月”门诊拟“下肢动脉硬化闭塞症”于2016-03-11收入我科。查体：双下肢无畸形，双足皮肤色泽发绀，双下肢皮温低。双侧足背动脉未触及，右侧胫后动脉弱，左侧胫后动脉未触及，双侧股动脉搏正常。双下肢感觉功能未见明显异常，活动可。双侧桡动脉、颈动脉搏动无明显异常。辅助检查2016-3-1来我院就诊，门诊行双下肢彩超示1.双侧股动脉内膜增厚毛糙，伴多发斑块形成；2.双侧股动脉、腘动脉不全性闭塞，双侧股浅动脉闭塞。根据以上病史、查体及辅助检查结果，可初步诊断为1.下肢动脉硬化闭塞症（静息痛期）2.糖尿病3.高血压。经与家属谈话并签字同意定于2016年03月16日在局麻下行下肢动脉造影备PTA支架成形备置管溶栓术治疗。术前术者查看患者及病情评估：包俊敏主诊医师术前查看患者，目前诊断明确，血糖、血压控制可，双下肢缺血症状明显，影像提示右下肢长段股浅动脉闭塞，膝下动脉未显影，左下肢胫后动脉显影，拟于明日先行在局麻下行右下肢动脉造影+PTA支架成形术；左下肢缺血症状可行限期手术治疗。术前诊断：1.下肢动脉硬化闭塞症（静息痛期）2.糖尿病3.高血压。手术指征：双下肢缺血症状明显，影像证实下肢动脉硬化闭塞症。手术禁忌症:无。拟施手术名称和手术方式：右下肢动脉造影+PTA支架成形术。手术时间：2016年03月16日拟施麻醉方式：局麻注意事项：１、术前完善检查，做好术前评估；２、术中操作细致轻柔，避免副损伤；３、术后加强护理，注意穿刺点有无出血。袁良喜/董健2016-03-15 16:16　　　　　术前讨论讨论日期：2016年03月15日参加讨论人员：包俊敏主任医师、袁良喜主治医师、董健住院医师、李强进修医师、李海燕护士长或责任护士及相关科室人员主持人：包俊敏主诊医师讨论内容：　　李强进修医师：病史汇报详见入院记录。患者因双下肢静息痛2个月入院。根据病史、查体及辅助检查结果初步诊断为1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。术前准备已完善。经与家属谈话并签字同意定于2016年03月16日在全麻下行右下肢动脉造影+PTA支架成形术治疗。    袁良喜主治医师：患者术前诊断1.下肢动脉硬化闭塞症（静息痛期） 2.糖尿病 3.高血压。手术指征双下肢缺血症状明显，影像证实下肢动脉硬化闭塞症。手术禁忌症无。拟实施右下肢动脉造影+PTA支架成形术，拟实施局部麻醉。手术可能存在的风险术中使用造影剂致过敏及急性肾功能衰竭等，严重者可危及生命。术中损伤血管、神经，术中动脉破裂出血，失血性休克，术后假性动脉瘤形成，术后穿刺点出血。防范措施：术中仔细操作，术后注意应用抗凝药物，监测生命体征，观察出血点情况。    李海燕护士长（或责任护士）：术后严密观察，注意有无穿刺点出血及患肢血运情况。    包俊敏主任医师总结：患者目前诊断下肢动脉硬化闭塞症（静息痛期）诊断明确，合并高血压、糖尿病，目前下肢缺血症状明显，静息痛严重，需止痛药物治疗，经讨论拟行右下肢动脉造影+PTA支架成形术。术前完善检查，；术中操作仔细，选择合适球囊、支架；术后予以抗凝、抗血小板、扩张血管治疗。袁良喜/李强2016-03-16 16:40　　　　　术后首次病程记录    患者今日在局麻下行下肢动脉造影PTA支架成形术。术中诊断1.下肢动脉硬化闭塞症（静息痛期）2.糖尿病3.高血压。手术经过如下：穿刺后造影提示左肾动脉稍狭窄，右肾动脉通畅、管径正常，腹主动脉、双侧髂动脉通畅，管径正常、股总动脉通畅，股深动脉通畅，侧枝发达，股浅动脉自开口处以下至中段均不显影，股浅动脉下段及腘动脉由侧枝供血，局限性狭窄，但血流通畅；腓动脉多发狭窄，胫前动脉通畅，但中段有一小动静脉瘘。导管配合导丝，尝试开通股浅动脉闭塞段未成功。遂消毒腘窝，逆行穿刺腘动脉。导丝成功通过股浅动脉闭塞段。在股动脉入路导管配合下，导丝头端通过导管引出体外。退出导管，自股动脉沿导丝送入5mm*22cm球囊于股浅动脉，对股浅动脉闭塞段进行扩张。然后退出腘动脉处鞘管，沿股动脉送入4*120mm球囊对腘动脉进行扩张5min，并进行加压包扎。然后先后送入5*150mm和6*170mm支架于腘动脉和股浅动脉闭塞段，透视下精确定位后成功释放。经后扩后再次造影显示股浅动脉、腘动脉全段通畅，血流迅速，支架形态良好，位置恰当，腘动脉周围无造影剂渗出。术后予抗凝止痛扩血管等治疗。    术后深静脉血栓评估：(3-4分)中危袁良喜2016-03-17 10:40　　　　　术后第一天记录    术后第1天，患者生命体征：体温37.0℃，脉搏70次／分，呼吸19次／分，血压130／75mmHg，患者一般情况良好，神志清，精神可，睡眠可，饮食可，大小便正常，查体情况穿刺点无渗出，患肢皮温较前温暖。袁良喜主治医师查房指示：患者术后一般情况可，生命体征平稳，继续当前治疗方案，注意观察患肢血供。袁良喜/董健2016-03-18 08:57　　　　　术后第二天记录    术后第2天，患者生命体征：体温37.3℃，脉搏72次／分，呼吸18次／分，血压146／80mmHg，患者一般情况良好，神志清，精神可，睡眠可，饮食可，大小便正常，查体情况心肺未及异常，右下肢股动脉及腘动脉穿刺点无渗出，小腿轻度肿胀，患肢皮温较前温暖。袁良喜主治医师查房指示：患者术后恢复可，已停用丹参、疏血通，加用西洛他唑片(100.0000mg);2/日;口服，继续观察患肢血运。袁良喜/李强2016-03-19 15:43　　　　　术后第三天记录术后第3天，患者生命体征：体温36.7℃，脉搏70次／分，呼吸19次／分，血压130／75mmHg，患者一般情况良好，神志清，精神可，睡眠可，饮食可，大小便正常，查体情况同前。辅助检查2016-3-19 12:44:47  血  钠139mmol/L、钾4.4mmol/L、氯103mmol/L、肌酐136umol/L2016-3-19 12:21:28  血  白细胞计数12.33x10^9/L、中性粒细胞计数10.66x10^9/L、红细胞计数3.98x10^12/L、血小板计数158x10^9/L、血红蛋白118g/L。包俊敏主诊医师查房指示：术后一般情况可，生命体征平稳，继续当前治疗方案，注意观察患者生命体征变化。袁良喜2016-03-21 11:07　　　　　袁良喜主治医师查房记录    今日袁良喜主治医师查房，患者主诉:无。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：体温36.5℃，脉搏70次／分，呼吸18次／分，血压130/70mmHg。查体情况:患肢皮温暖，腓肠肌轻压痛，穿刺点无渗出。辅助检查结果：2016-3-21 7:04:53  血  白细胞计数8.10x10^9/L、中性粒细胞计数6.58x10^9/L、红细胞计数3.49x10^12/L、血小板计数186x10^9/L、血红蛋白103g/L；2016-3-20 12:11:27  血  血清降钙素原0.436ng/ml。袁良喜主治医师查房后指示：患者术后一般情况可，生命体征平稳，下肢血供改善明显，明日可出院，出院后3个月门诊复诊。袁良喜";
+        String medicalContent = "2011-10-11 15:24            　　首次病程记录盛继贤，男，77岁，已婚，汉族，浙江省人，家住浙江省平湖市锦湖花苑26-3-202。因“肝占位术后2月3周。”门诊拟“原发性肝癌”于2011-10-11收入我科。病例特点：1、老年男，慢性起病，治疗史明确，病程较长。2、2011-07-09嘉兴人民医院AFP181.1ug/L，2011-07-11肝脏CT增强：左肝占位性病变，2.5×2.5cm，考虑肝癌，肝硬化。2011-07-25于东方肝胆医院行左肝肿瘤切除术。术后病理：1.小肝细胞癌，粗梁型，III级；2.慢性肝血吸虫病。3、入院时情况：病人精神状态良好，体力情况良好，食欲食量良好，夜间盗汗，耳鸣较重，睡眠情况差，体重无明显变化，大便干，小便频数。4、查体：全身皮肤粘膜无黄染，心肺无异常。腹平坦，中上腹有一长20cm，全腹无压痛及反跳痛，肝脾肋下未及，莫非氏征（-），移动性浊音阴性，肠鸣音正常。双下肢无浮肿。5、舌红，少苔，脉弦细。根据上述病史特点：初步诊断：    中医诊断：肝癌（肝肾阴虚）    西医诊断：1.原发性肝癌Ia期术后2.血吸虫性肝硬化3.2型糖尿病诊断依据：1.原发性肝癌Ia期术后：2011-07-09嘉兴人民医院AFP181.1ug/L，2011-07-11肝脏CT增强：左肝占位性病变，2.5×2.5cm，考虑肝癌，肝硬化。2011-07-25于东方肝胆医院行左肝肿瘤切除术。术后病理：1.小肝细胞癌，粗梁型，III级；2.慢性肝血吸虫病。           2.血吸虫性肝硬化：十几岁时患有血吸虫病，2011-07-25于东方肝胆医院行左肝肿瘤切除术。术后病理：1.小肝细胞癌，粗梁型，III级；2.慢性肝血吸虫病。            3.2型糖尿病：糖尿病史30年，目前口服诺合龙，阿卡波糖及皮下注射胰岛素。空腹血糖：6mmol/L，餐后血糖：13mmol/L。 鉴别诊断：患者术后病理诊断明确，排除鉴别诊断 辨病辨证依据：患者老年男性，或因饮食不当，或因劳累过度，而致肝肾亏虚，精液不能滋养耳目，而致耳鸣，阴液不足而致夜间汗出。舌红，少苔，脉弦细。均为肝肾阴虚之象。 诊疗计划：1、中医科二级护理，完善各项入院常规检查。                2、患者证属肝肾阴虚，治当滋养肝肾，拟方如下：       解毒方 加  肝协定方  柴胡9    香附6    女贞子12                  墨旱莲12  黄芪15   石斛15   天冬15                  麦冬15    山楂炭12 六神曲12 。１.检查安排：完善各项入院检查。２.治疗计划：予以华蟾素抗肿瘤，谷胱甘肽保肝治疗。３.预期的治疗结果：防止肿瘤复发。４.预计住院时间：10天。５.预计治疗费用：5000元（以实际发生费用为准）。孟永斌2011-10-12 10:31　　　　　刘群主治医师首次查房记录今日刘群主治医师查房：补充的病史和体征：无。今日患者病情稳定，一般情况可，生命体征平稳，神志清，精神可，睡眠可，饮食可，大小便正常。主治医师查房后指出：主治医师48小时诊断：1.原发性肝癌Ia期术后2.血吸虫性肝硬化3.2型糖尿病诊断依据：1.原发性肝癌Ia期术后：2011-07-09嘉兴人民医院AFP181.1ug/L，2011-07-11肝脏CT增强：左肝占位性病变，2.5×2.5cm，考虑肝癌，肝硬化。2011-07-25于东方肝胆医院行左肝肿瘤切除术。术后病理：1.小肝细胞癌，粗梁型，III级；2.慢性肝血吸虫病。           2.血吸虫性肝硬化：十几岁时患有血吸虫病，2011-07-25于东方肝胆医院行左肝肿瘤切除术。术后病理：1.小肝细胞癌，粗梁型，III级；2.慢性肝血吸虫病。            3.2型糖尿病：糖尿病史30年，目前口服诺和龙，阿卡波糖及皮下注射胰岛素。空腹血糖：6mmol/L，餐后血糖：13mmol/L。鉴别诊断：患者术后病理诊断明确，排除鉴别诊断。治疗计划：予以华蟾素抗肿瘤，谷胱甘肽保肝治疗。孟永斌2011-10-13 11:34　　　　　陈喆主诊医师首次查房记录今日陈喆主诊医师查房后分析病情如下：补充的病史和体征：甲胎蛋白<30μg/L。癌胚抗原2.83ng/ml、糖类抗原CA1995.20U/ml。PT13.2s、APTT37.2s。WBC3.26x10^9/L、GRAN%62.3%、RBC4.38x10^12/L、HGB137g/L、PLT98x10^9/L。总胆红素13.9umol/L、白蛋白44g/L、丙氨酸氨基转移酶26U/L、门冬氨酸氨基转移酶27U/L、碱性磷酸酶71U/L、γ-谷氨酰转肽酶81U/L。今日患者病情稳定，一般情况可，生命体征平稳，神志清，精神可，睡眠可，饮食可，大小便正常。诊断、病情、治疗方法分析讨论：患者原发性肝癌术后，此次入院行术后保肝，防治肿瘤复发治疗。注意事项：密切观察患者症状体征，如有异常及时处理。孟永斌2011-10-14 11:37　　　　　住院医师病程记录    患者诉夜间小便次数多。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。B超：肝部分切除术后，血吸虫肝硬化，胆囊继发改变，胆囊息肉，前列腺钙化灶。考虑患者有前列腺增生病史，予以请泌尿科会诊，指导用药。孟永斌2011-10-15 08:43　　　　　刘群主治医师查房记录    今日刘群主治医师查房，患者无不适主述。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。患者今日病情稳定，继续予以华蟾素抗肿瘤治疗。孟永斌2011-10-16 08:45　　　　　陈喆主诊医师查房记录　　今日陈喆主诊医师查房，患者诉头顶部多发红色皮疹。今日患者病情稳定，一般情况良好，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。陈喆主诊医师查房后指示：请皮肤科会诊后明确头顶部皮疹原因。孟永斌2011-10-17 15:50　　　　　会诊病程记录今日皮肤科会诊意见：患多年来头部反复发红色小皮疹，且局部瘙痒。查体：头部红色斑疹，脱屑。考虑脂溢性皮炎。建议：予以宁肤露外用。回报上级医生会诊意见，同意暂行治疗。孟永斌2011-10-18 08:54　　　　　住院医师病程记录今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。患者诉用宁肤露外用后头顶部皮疹较前缓解。今日继续予以宁肤露外用。孟永斌2011-10-19 11:38　　　　　刘群主治医师查房记录　　今日刘群主治医师查房，患者无不适主述。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。患者有前列腺增生史，今日于门诊泌尿外科就诊，查前列腺B超，膀胱残余尿。刘群主治医师查房后指示：今日继续予以华蟾素抗肿瘤，复方甘草酸苷保肝治疗。孟永斌/顾文婷2011-10-20 15:48　　　　　住院医师病程记录    患者无不适主述。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。患者门诊B超示：前列腺未见异常，膀胱无残余尿。患者病情稳定，治疗同前。孟永斌/顾文婷2011-10-21 11:52　　　　　陈喆主诊医师查房记录　　今日陈喆主诊医师查房，患者无不适主述。今日患者病情稳定，一般情况可，神志清楚，精神可，睡眠可，饮食可，大小便无异常。查体：同前。陈喆主诊医师查房后指示：患者此次入院行华蟾素治疗，现疗程已到，治疗结束，明日予以出院。孟永斌/顾文婷";
         //medicalContent = processMedicalContent(medicalContent);
         System.out.println(medicalContent);
         //System.out.println(sb.toString());
