@@ -17,7 +17,6 @@ public class Mapping implements Comparable<Mapping> {
     private String[] include;
     private String[] exclude;
     private Map<String, String> rule;
-    private String mappedValue;
     private Integer rank;
 
     /**

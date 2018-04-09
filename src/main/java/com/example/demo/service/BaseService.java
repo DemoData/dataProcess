@@ -66,6 +66,10 @@ public abstract class BaseService extends GenericService {
     }
 
     private void executeByMultiThread(Integer count, String dataSource) {
+        if (count == 0) {
+            log.error("executeByMultiThread(): count is 0");
+            return;
+        }
         int totalPage = 1;
         if (count > getPageSize()) {
             totalPage = count / getPageSize();

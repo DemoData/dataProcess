@@ -1,6 +1,7 @@
 package com.example.demo.service.bdsz.zl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo.common.constant.CommonConstant;
 import com.example.demo.dao.TableDao;
 import com.example.demo.dao.standard.IAssayDao;
 import com.example.demo.entity.Assay;
@@ -42,6 +43,7 @@ public class BDZLAssayServiceImpl extends TableService<Assay> {
         }
 
         record.setOrgOdCategories(orgOdCatCaches.get(groupRecordName).toArray(new String[0]));
+        record.setOdCategories(new String[]{"肿瘤"});
     }
 
     @Override
@@ -62,14 +64,14 @@ public class BDZLAssayServiceImpl extends TableService<Assay> {
     protected void initRecordBasicInfo(Record record) {
         record.setHospitalId("57b1e211d897cd373ec76dc6");
         record.setBatchNo("bdsz20180320");
-        record.setDepartment("肿瘤科");
+        record.setDepartment("肿瘤内科");
         record.setFormat("table");
         record.setDeleted(false);
-        record.setSource("采集入库");
+        record.setSource("化验");
         record.setStatus("AMD识别完成");
         record.setRecordType("化验记录");
         record.setSubRecordType("化验");
-        record.setPatientId("bdsz_" + record.getPatientId());
+        record.setPatientId(StringUtils.isEmpty(record.getPatientId()) ? CommonConstant.EMPTY_FLAG : "bdsz_" + record.getPatientId());
     }
 
     protected void initInfoArray(Record record, List<Assay> assayList) {

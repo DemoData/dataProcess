@@ -18,12 +18,12 @@ public class XGMedicalHistoryDaoImpl extends BaseDao implements IMedicalHistoryD
 
     @Override
     public Integer getCount(String dataSource) {
-        return getJdbcTemplate(dataSource).queryForObject("select count(id) from `病历文书` where isStock=0 and temp=1", Integer.class);
+        return getJdbcTemplate(dataSource).queryForObject("select count(id) from `病历文书` where isStock=0", Integer.class);
     }
 
     @Override
     protected String generateQuerySql() {
-        String sql = "select * from `病历文书` where isStock=0 and temp=1";
+        String sql = "select * from `病历文书` where isStock=0";
         return sql;
     }
 

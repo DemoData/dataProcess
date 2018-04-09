@@ -29,6 +29,7 @@ public class Record {
     private boolean deleted;
     private String source;
     private String status;
+    private Long createTime;
 
     public Record() {
         initial();

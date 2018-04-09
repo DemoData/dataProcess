@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo.common.constant.CommonConstant;
 import com.example.demo.common.support.TextFormatter;
 import com.example.demo.dao.TextDao;
 import com.example.demo.entity.Record;
@@ -32,22 +33,30 @@ public abstract class TextService<T> extends BaseService {
                 continue;
             }
             List<T> resultList = currentDao().findRecord(dataSource, startPage, getPageSize());
+            if (resultList == null || resultList.isEmpty()) {
+                log.info("runStart(): can not found any record");
+                break;
+            }
             if (resultList != null && resultList.size() < getPageSize()) {
                 isFinish = true;
             }
-            if (resultList == null || resultList.isEmpty()) {
-                continue;
-            }
+
             List<JSONObject> jsonList = new ArrayList<>();
             //遍历record
             for (T entity : resultList) {
                 Record record = new Record();
-                initRecordBasicInfo(record, entity);
                 record.setOdCategories(new String[]{getOdCategory(dataSource)});
+                record.setOrgOdCategories(new String[]{CommonConstant.EMPTY_FLAG});
+
+                initRecordBasicInfo(record, entity);
 
                 customProcess(record, entity, orgOdCatCaches, patientCaches, dataSource);
 
                 putText2Record(entity, record);
+                //校验Record,不满足则跳过
+                if (!validateRecord(record)) {
+                    continue;
+                }
                 //移除id,添加string类型_id
                 JSONObject jsonObject = bean2Json(record);
                 jsonObject.remove("id");
@@ -67,6 +76,16 @@ public abstract class TextService<T> extends BaseService {
             pageNum++;
         }
         log.info(">>>>>>>>>>>total inserted records: " + count + " from " + dataSource);
+    }
+
+    /**
+     * 相关校验规则,用于子类去重写
+     *
+     * @param record
+     * @return
+     */
+    protected boolean validateRecord(Record record) {
+        return true;
     }
 
     protected abstract TextDao<T> currentDao();

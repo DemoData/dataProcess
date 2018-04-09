@@ -65,6 +65,7 @@ public class XGMedicalHistoryServiceImpl extends TextService<MedicalHistory> {
     protected void initRecordBasicInfo(Record record, MedicalHistory medicalHistory) {
         record.setHospitalId("57b1e21fd897cd373ec7a14f");
         record.setBatchNo("shch20180315");
+//        record.setBatchNo("shch20180327");
         record.setDepartment("血管外科");
         record.setFormat("text");
         record.setDeleted(false);

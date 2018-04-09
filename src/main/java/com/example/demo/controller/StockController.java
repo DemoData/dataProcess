@@ -1,5 +1,8 @@
 package com.example.demo.controller;
 
+import com.example.demo.other.BlobToContent;
+import com.example.demo.other.DataClean;
+import com.example.demo.other.DataToMysql;
 import com.example.demo.service.standard.IDataService;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,15 @@ public class StockController {
     @Qualifier("patientService")
     private IDataService patientService;
 
+    @Autowired
+    private DataToMysql dataToMysql;
+
+    @Autowired
+    private DataClean dataClean;
+
+    @Autowired
+    private BlobToContent blobToContent;
+
     /**
      * 长海医院Patient数据处理
      *
@@ -33,5 +45,23 @@ public class StockController {
             return SUCCESS_FLAG;
         }
         return FAIL_FLAG;
+    }
+
+    @GetMapping("/processTest")
+    public String processTest() {
+        dataToMysql.process();
+        return SUCCESS_FLAG;
+    }
+
+    @GetMapping("/dataClean")
+    public String dataClean() {
+        dataClean.updateRecordTypeByAnchor();
+        return SUCCESS_FLAG;
+    }
+
+    @GetMapping("/blobToContent")
+    public String blobToContent() {
+        blobToContent.processData();
+        return SUCCESS_FLAG;
     }
 }
